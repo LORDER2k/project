@@ -1,0 +1,1020 @@
+{% extends "base_executivo.html" %}
+
+{% block title %}Metas Financeiras - ContaSmart Pro{% endblock %}
+{% block page_title %}Gestão de Metas{% endblock %}
+{% block page_subtitle %}Acompanhe e conquiste seus objetivos financeiros{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+<li><a href="#">{{ 'Metas' }}</a></li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Goals Header */
+    .goals-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-xl);
+        flex-wrap: wrap;
+        gap: var(--spacing-lg);
+    }
+    
+    .goals-stats {
+        display: flex;
+        gap: var(--spacing-lg);
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        margin-bottom: 4px;
+        font-family: var(--font-mono);
+    }
+    
+    .stat-value.positive {
+        color: var(--success-color);
+    }
+    
+    .stat-value.warning {
+        color: var(--warning-color);
+    }
+    
+    .stat-label {
+        font-size: var(--font-size-sm);
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    /* Goals Filters */
+    .goals-filters {
+        display: flex;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-xl);
+        flex-wrap: wrap;
+    }
+    
+    .filter-badge {
+        padding: var(--spacing-sm) var(--spacing-lg);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-md);
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        font-family: var(--font-primary);
+        font-size: var(--font-size-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .filter-badge:hover {
+        background: var(--bg-surface);
+        color: var(--text-primary);
+    }
+    
+    .filter-badge.active {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+    
+    .filter-badge .count {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: var(--font-size-xs);
+    }
+    
+    /* Goals Grid */
+    .goals-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .goal-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        position: relative;
+        overflow: hidden;
+        transition: all var(--transition-normal);
+    }
+    
+    .goal-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--elevation-3);
+    }
+    
+    .goal-card.completed {
+        opacity: 0.8;
+    }
+    
+    .goal-card.completed::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--success-color);
+    }
+    
+    .goal-card.high-priority {
+        border-color: var(--danger-color);
+    }
+    
+    .goal-card.medium-priority {
+        border-color: var(--warning-color);
+    }
+    
+    .goal-card.low-priority {
+        border-color: var(--info-color);
+    }
+    
+    .goal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .goal-title {
+        font-size: var(--font-size-lg);
+        font-weight: 700;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .goal-description {
+        color: var(--text-secondary);
+        font-size: var(--font-size-sm);
+        margin-bottom: var(--spacing-md);
+        line-height: 1.5;
+    }
+    
+    .goal-priority {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: var(--font-size-xs);
+        font-weight: 600;
+        font-family: var(--font-mono);
+        text-transform: uppercase;
+    }
+    
+    .priority-high {
+        background: rgba(255, 51, 102, 0.1);
+        color: var(--danger-color);
+    }
+    
+    .priority-medium {
+        background: rgba(255, 153, 0, 0.1);
+        color: var(--warning-color);
+    }
+    
+    .priority-low {
+        background: rgba(0, 204, 255, 0.1);
+        color: var(--info-color);
+    }
+    
+    .goal-progress {
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .progress-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: var(--spacing-xs);
+        font-size: var(--font-size-sm);
+    }
+    
+    .progress-amount {
+        font-family: var(--font-mono);
+        font-weight: 600;
+    }
+    
+    .progress-percentage {
+        color: var(--text-muted);
+    }
+    
+    .goal-deadline {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        font-size: var(--font-size-sm);
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .deadline-warning {
+        color: var(--danger-color);
+        font-weight: 600;
+    }
+    
+    .goal-actions {
+        display: flex;
+        gap: var(--spacing-sm);
+        margin-top: var(--spacing-md);
+    }
+    
+    /* Quick Add Goal */
+    .quick-add-goal {
+        background: var(--bg-card);
+        border: 2px dashed var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-xl);
+        text-align: center;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .quick-add-goal:hover {
+        border-color: var(--primary-color);
+        background: var(--bg-tertiary);
+    }
+    
+    .quick-add-icon {
+        font-size: 3rem;
+        color: var(--primary-color);
+        margin-bottom: var(--spacing-md);
+        opacity: 0.5;
+    }
+    
+    /* Progress Visualization */
+    .progress-visualization {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .progress-chart {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+    }
+    
+    /* Empty State */
+    .goals-empty-state {
+        text-align: center;
+        padding: var(--spacing-xxl);
+        color: var(--text-muted);
+    }
+    
+    .goals-empty-icon {
+        font-size: 4rem;
+        margin-bottom: var(--spacing-lg);
+        opacity: 0.3;
+    }
+    
+    /* Goal Modal */
+    .goal-modal {
+        max-width: 500px;
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .goals-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .goals-stats {
+            justify-content: center;
+        }
+        
+        .goals-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Goals Header -->
+<div class="goals-header">
+    <div>
+        <h2>Metas Financeiras</h2>
+        <p class="text-muted">Acompanhe seu progresso em direção aos objetivos</p>
+    </div>
+    
+    <div class="goals-stats">
+        <div class="stat-item">
+            <div class="stat-value">{{ total_goals }}</div>
+            <div class="stat-label">Total</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value positive">{{ completed_goals }}</div>
+            <div class="stat-label">Concluídas</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value {% if avg_progress >= 70 %}positive{% elif avg_progress >= 40 %}warning{% else %}negative{% endif %}">
+                {{ "%.0f"|format(avg_progress) }}%
+            </div>
+            <div class="stat-label">Progresso Médio</div>
+        </div>
+    </div>
+</div>
+
+<!-- Goals Filters -->
+<div class="goals-filters">
+    <div class="filter-badge {% if filter_status == 'all' %}active{% endif %}" 
+         onclick="filterGoals('status', 'all')">
+        <span>Todas</span>
+        <span class="count">{{ total_goals }}</span>
+    </div>
+    
+    <div class="filter-badge {% if filter_status == 'active' %}active{% endif %}" 
+         onclick="filterGoals('status', 'active')">
+        <span>Ativas</span>
+        <span class="count">{{ active_goals }}</span>
+    </div>
+    
+    <div class="filter-badge {% if filter_status == 'completed' %}active{% endif %}" 
+         onclick="filterGoals('status', 'completed')">
+        <span>Concluídas</span>
+        <span class="count">{{ completed_goals }}</span>
+    </div>
+    
+    <div class="filter-spacer"></div>
+    
+    <div class="filter-badge {% if filter_priority == 'all' %}active{% endif %}" 
+         onclick="filterGoals('priority', 'all')">
+        <span>Todas Prioridades</span>
+    </div>
+    
+    <div class="filter-badge {% if filter_priority == 'high' %}active{% endif %}" 
+         onclick="filterGoals('priority', 'high')">
+        <span>Alta</span>
+        <span class="count">{{ goals|selectattr('priority', 'equalto', 'high')|list|length }}</span>
+    </div>
+    
+    <div class="filter-badge {% if filter_priority == 'medium' %}active{% endif %}" 
+         onclick="filterGoals('priority', 'medium')">
+        <span>Média</span>
+        <span class="count">{{ goals|selectattr('priority', 'equalto', 'medium')|list|length }}</span>
+    </div>
+    
+    <div class="filter-badge {% if filter_priority == 'low' %}active{% endif %}" 
+         onclick="filterGoals('priority', 'low')">
+        <span>Baixa</span>
+        <span class="count">{{ goals|selectattr('priority', 'equalto', 'low')|list|length }}</span>
+    </div>
+</div>
+
+<!-- Quick Add Goal -->
+<div class="quick-add-goal" onclick="showAddGoalModal()">
+    <div class="quick-add-icon">
+        <i class="fas fa-bullseye"></i>
+    </div>
+    <h3>Adicionar Nova Meta</h3>
+    <p class="text-muted">Clique para definir um novo objetivo financeiro</p>
+</div>
+
+<!-- Goals Grid -->
+<div class="goals-grid">
+    {% for goal in goals %}
+    <div class="goal-card {% if goal.is_completed %}completed{% endif %} {{ goal.priority }}-priority"
+         data-id="{{ goal.id }}"
+         data-priority="{{ goal.priority }}"
+         data-completed="{{ goal.is_completed }}">
+        
+        <div class="goal-header">
+            <div>
+                <h3 class="goal-title">{{ goal.title }}</h3>
+                <div class="goal-priority priority-{{ goal.priority }}">
+                    {{ 'Alta' if goal.priority == 'high' else 'Média' if goal.priority == 'medium' else 'Baixa' }} Prioridade
+                </div>
+            </div>
+            
+            {% if goal.is_completed %}
+            <div class="goal-status">
+                <span class="neon-badge success">
+                    <i class="fas fa-check"></i>
+                    Concluída
+                </span>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if goal.description %}
+        <p class="goal-description">{{ goal.description }}</p>
+        {% endif %}
+        
+        <div class="goal-progress">
+            <div class="progress-info">
+                <span class="progress-amount">
+                    R$ {{ "%.2f"|format(goal.current_amount) }} / R$ {{ "%.2f"|format(goal.target_amount) }}
+                </span>
+                <span class="progress-percentage">
+                    {{ "%.1f"|format((goal.current_amount / goal.target_amount) * 100 if goal.target_amount > 0 else 0) }}%
+                </span>
+            </div>
+            
+            <div class="neon-progress">
+                <div class="neon-progress-bar {% if goal.is_completed %}success{% elif (goal.current_amount / goal.target_amount) >= 0.7 %}primary{% elif (goal.current_amount / goal.target_amount) >= 0.4 %}warning{% else %}danger{% endif %}" 
+                     style="width: {{ (goal.current_amount / goal.target_amount) * 100 if goal.target_amount > 0 else 0 }}%">
+                </div>
+            </div>
+        </div>
+        
+        <div class="goal-deadline">
+            <i class="fas fa-calendar"></i>
+            <span>
+                Prazo: <strong>{{ goal.deadline or 'Sem prazo definido' }}</strong>
+                {% if goal.deadline %}
+                    {% set days_left = (goal.deadline|string|to_date - now).days %}
+                    {% if days_left < 0 %}
+                        <span class="deadline-warning">(Vencida há {{ -days_left }} dias)</span>
+                    {% elif days_left < 7 %}
+                        <span class="deadline-warning">(Vence em {{ days_left }} dias)</span>
+                    {% endif %}
+                {% endif %}
+            </span>
+        </div>
+        
+        <div class="goal-actions">
+            {% if not goal.is_completed %}
+            <button class="neon-btn sm success" onclick="addProgress({{ goal.id }})">
+                <i class="fas fa-plus"></i>
+                Adicionar
+            </button>
+            <button class="neon-btn sm primary" onclick="markAsCompleted({{ goal.id }})">
+                <i class="fas fa-check"></i>
+                Concluir
+            </button>
+            {% endif %}
+            <button class="neon-btn sm outline" onclick="editGoal({{ goal.id }})">
+                <i class="fas fa-edit"></i>
+                Editar
+            </button>
+            <button class="neon-btn sm danger" onclick="deleteGoal({{ goal.id }})">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="goals-empty-state">
+        <div class="goals-empty-icon">
+            <i class="fas fa-bullseye"></i>
+        </div>
+        <h3>Nenhuma meta encontrada</h3>
+        <p class="text-muted">
+            {% if filter_status != 'all' or filter_priority != 'all' %}
+                Nenhuma meta corresponde aos filtros aplicados.
+            {% else %}
+                Você ainda não possui metas definidas. Crie sua primeira meta para começar!
+            {% endif %}
+        </p>
+        <div class="empty-state-actions">
+            <button class="neon-btn primary lg" onclick="showAddGoalModal()">
+                <i class="fas fa-plus"></i>
+                Criar Primeira Meta
+            </button>
+            {% if filter_status != 'all' or filter_priority != 'all' %}
+            <button class="neon-btn outline lg" onclick="resetFilters()">
+                <i class="fas fa-redo"></i>
+                Limpar Filtros
+            </button>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Progress Visualization -->
+{% if goals %}
+<div class="progress-visualization">
+    <div class="progress-chart">
+        <h4><i class="fas fa-chart-bar"></i> Progresso por Prioridade</h4>
+        <canvas id="priorityChart" height="200"></canvas>
+    </div>
+    
+    <div class="progress-chart">
+        <h4><i class="fas fa-chart-pie"></i> Distribuição por Status</h4>
+        <canvas id="statusChart" height="200"></canvas>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar gráficos se houver metas
+        if ({{ goals|length }} > 0) {
+            initPriorityChart();
+            initStatusChart();
+        }
+        
+        // Configurar tooltips
+        setupGoalTooltips();
+    });
+    
+    // Gráfico de Progresso por Prioridade
+    function initPriorityChart() {
+        const ctx = document.getElementById('priorityChart').getContext('2d');
+        const goals = {{ goals|tojson }};
+        
+        // Agrupar por prioridade
+        const priorities = {
+            high: { current: 0, target: 0, count: 0 },
+            medium: { current: 0, target: 0, count: 0 },
+            low: { current: 0, target: 0, count: 0 }
+        };
+        
+        goals.forEach(goal => {
+            if (!goal.is_completed) {
+                priorities[goal.priority].current += goal.current_amount;
+                priorities[goal.priority].target += goal.target_amount;
+                priorities[goal.priority].count++;
+            }
+        });
+        
+        const labels = ['Alta', 'Média', 'Baixa'];
+        const progress = [
+            (priorities.high.target > 0 ? (priorities.high.current / priorities.high.target) * 100 : 0),
+            (priorities.medium.target > 0 ? (priorities.medium.current / priorities.medium.target) * 100 : 0),
+            (priorities.low.target > 0 ? (priorities.low.current / priorities.low.target) * 100 : 0)
+        ];
+        const colors = [var('--danger-color'), var('--warning-color'), var('--info-color')];
+        
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Progresso (%)',
+                    data: progress,
+                    backgroundColor: colors,
+                    borderColor: colors.map(c => c.replace(')', ', 0.8)').replace('rgb', 'rgba')),
+                    borderWidth: 2,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Progresso: ${context.parsed.y.toFixed(1)}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Gráfico de Distribuição por Status
+    function initStatusChart() {
+        const ctx = document.getElementById('statusChart').getContext('2d');
+        const goals = {{ goals|tojson }};
+        
+        const completed = goals.filter(g => g.is_completed).length;
+        const active = goals.length - completed;
+        
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Ativas', 'Concluídas'],
+                datasets: [{
+                    data: [active, completed],
+                    backgroundColor: [var('--primary-color'), var('--success-color')],
+                    borderColor: var('--bg-card'),
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: var('--text-primary')
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const percentage = Math.round((context.parsed / context.dataset.data.reduce((a, b) => a + b)) * 100);
+                                return `${context.label}: ${context.parsed} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Funções de filtro
+    function filterGoals(type, value) {
+        const url = new URL(window.location);
+        
+        if (type === 'status') {
+            url.searchParams.set('status', value);
+        } else if (type === 'priority') {
+            url.searchParams.set('priority', value);
+        }
+        
+        window.location.href = url.toString();
+    }
+    
+    function resetFilters() {
+        window.location.href = '{{ url_for("goals") }}';
+    }
+    
+    // Funções de ação
+    function showAddGoalModal() {
+        const modal = document.createElement('div');
+        modal.className = 'neon-modal active';
+        modal.innerHTML = `
+            <div class="neon-modal-content goal-modal">
+                <div class="neon-modal-header">
+                    <h3><i class="fas fa-bullseye"></i> Nova Meta</h3>
+                    <button class="neon-modal-close" onclick="closeModal()">&times;</button>
+                </div>
+                <div class="neon-modal-body">
+                    <form id="addGoalForm">
+                        <div class="form-group">
+                            <label for="goalTitle">Título da Meta *</label>
+                            <input type="text" class="neon-input" id="goalTitle" name="title" required
+                                   placeholder="Ex: Reserva de emergência">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="goalDescription">Descrição</label>
+                            <textarea class="neon-input" id="goalDescription" name="description" rows="3"
+                                      placeholder="Descreva sua meta..."></textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="goalTarget">Valor Alvo *</label>
+                                <input type="number" class="neon-input" id="goalTarget" name="target_amount" 
+                                       required step="0.01" min="0.01" placeholder="0,00">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="goalDeadline">Prazo</label>
+                                <input type="date" class="neon-input" id="goalDeadline" name="deadline">
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="goalPriority">Prioridade</label>
+                                <select class="neon-select" id="goalPriority" name="priority">
+                                    <option value="low">Baixa</option>
+                                    <option value="medium" selected>Média</option>
+                                    <option value="high">Alta</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="goalInitial">Valor Inicial</label>
+                                <input type="number" class="neon-input" id="goalInitial" name="current_amount" 
+                                       step="0.01" min="0" value="0" placeholder="0,00">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="neon-modal-footer">
+                    <button type="button" class="neon-btn outline" onclick="closeModal()">
+                        Cancelar
+                    </button>
+                    <button type="submit" form="addGoalForm" class="neon-btn primary">
+                        <i class="fas fa-save"></i>
+                        Criar Meta
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Configurar data mínima (amanhã)
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        document.getElementById('goalDeadline').min = tomorrow.toISOString().split('T')[0];
+        
+        // Configurar envio do formulário
+        document.getElementById('addGoalForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            try {
+                const response = await fetch('/api/add_goal', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('Meta criada com sucesso!', 'success');
+                    closeModal();
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showNotification('Erro: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showNotification('Erro ao criar meta', 'error');
+                console.error('Error:', error);
+            }
+        });
+        
+        window.closeModal = function() {
+            modal.classList.remove('active');
+            setTimeout(() => modal.remove(), 300);
+        };
+    }
+    
+    async function addProgress(goalId) {
+        const amount = prompt('Quanto você gostaria de adicionar? (R$)');
+        
+        if (!amount || isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+            showNotification('Valor inválido', 'error');
+            return;
+        }
+        
+        try {
+            const response = await fetch(`/api/update_goal_progress/${goalId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ amount: parseFloat(amount) })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showNotification(result.message, 'success');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showNotification('Erro: ' + result.error, 'error');
+            }
+        } catch (error) {
+            showNotification('Erro ao atualizar progresso', 'error');
+            console.error('Error:', error);
+        }
+    }
+    
+    async function markAsCompleted(goalId) {
+        if (!confirm('Marcar esta meta como concluída?')) return;
+        
+        // Buscar meta para obter valor restante
+        const goalCard = document.querySelector(`[data-id="${goalId}"]`);
+        const target = parseFloat(goalCard.querySelector('.progress-amount').textContent
+            .match(/R\$\s*([\d.,]+)\s*\/\s*R\$\s*([\d.,]+)/)[2]
+            .replace('.', '').replace(',', '.'));
+        
+        const current = parseFloat(goalCard.querySelector('.progress-amount').textContent
+            .match(/R\$\s*([\d.,]+)\s*\/\s*R\$\s*([\d.,]+)/)[1]
+            .replace('.', '').replace(',', '.'));
+        
+        const remaining = target - current;
+        
+        if (remaining > 0) {
+            if (!confirm(`Faltam R$ ${remaining.toFixed(2)} para completar a meta. Deseja mesmo marcá-la como concluída?`)) {
+                return;
+            }
+        }
+        
+        // Adicionar valor restante para completar
+        try {
+            const response = await fetch(`/api/update_goal_progress/${goalId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ amount: remaining > 0 ? remaining : 0 })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showNotification('Meta marcada como concluída!', 'success');
+                setTimeout(() => location.reload(), 1000);
+            }
+        } catch (error) {
+            showNotification('Erro ao concluir meta', 'error');
+            console.error('Error:', error);
+        }
+    }
+    
+    function editGoal(goalId) {
+        // Implementar edição de meta
+        showNotification('Edição de meta - Em desenvolvimento', 'info');
+    }
+    
+    async function deleteGoal(goalId) {
+        if (!confirm('Tem certeza que deseja excluir esta meta?')) return;
+        
+        try {
+            const response = await fetch(`/api/delete_goal/${goalId}`, {
+                method: 'DELETE'
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                showNotification('Meta excluída com sucesso!', 'success');
+                document.querySelector(`[data-id="${goalId}"]`).remove();
+                updateGoalsCount();
+            } else {
+                showNotification('Erro: ' + result.error, 'error');
+            }
+        } catch (error) {
+            showNotification('Erro ao excluir meta', 'error');
+            console.error('Error:', error);
+        }
+    }
+    
+    // Tooltips
+    function setupGoalTooltips() {
+        // Tooltips para prazos
+        document.querySelectorAll('.goal-deadline').forEach(el => {
+            el.addEventListener('mouseenter', function() {
+                const deadlineText = this.textContent.match(/Prazo: (.+)/)[1];
+                const daysMatch = this.textContent.match(/\(Vence em (\d+) dias\)/);
+                
+                if (daysMatch) {
+                    const days = parseInt(daysMatch[1]);
+                    let message = `Prazo: ${deadlineText}`;
+                    
+                    if (days < 3) {
+                        message += '\n⚠️ Prazo muito curto!';
+                    } else if (days < 7) {
+                        message += '\n⚠️ Prazo próximo';
+                    }
+                    
+                    showTooltip(this, message);
+                }
+            });
+            
+            el.addEventListener('mouseleave', function() {
+                hideTooltip();
+            });
+        });
+        
+        // Tooltips para progresso
+        document.querySelectorAll('.progress-amount').forEach(el => {
+            el.addEventListener('mouseenter', function() {
+                const match = this.textContent.match(/R\$\s*([\d.,]+)\s*\/\s*R\$\s*([\d.,]+)/);
+                if (match) {
+                    const current = parseFloat(match[1].replace('.', '').replace(',', '.'));
+                    const target = parseFloat(match[2].replace('.', '').replace(',', '.'));
+                    const remaining = target - current;
+                    
+                    const tooltipText = `Faltam: R$ ${remaining.toFixed(2)}\nProgresso: ${((current / target) * 100).toFixed(1)}%`;
+                    showTooltip(this, tooltipText);
+                }
+            });
+            
+            el.addEventListener('mouseleave', function() {
+                hideTooltip();
+            });
+        });
+    }
+    
+    function showTooltip(element, text) {
+        const tooltip = document.createElement('div');
+        tooltip.className = 'executive-tooltip';
+        tooltip.textContent = text;
+        
+        document.body.appendChild(tooltip);
+        
+        const rect = element.getBoundingClientRect();
+        tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`;
+        tooltip.style.top = `${rect.top - tooltip.offsetHeight - 10}px`;
+        
+        element.tooltip = tooltip;
+    }
+    
+    function hideTooltip() {
+        const tooltip = document.querySelector('.executive-tooltip');
+        if (tooltip) {
+            tooltip.remove();
+        }
+    }
+    
+    function updateGoalsCount() {
+        const goals = document.querySelectorAll('.goal-card').length;
+        const activeCount = document.querySelectorAll('.goal-card:not(.completed)').length;
+        const completedCount = goals - activeCount;
+        
+        // Atualizar contadores
+        document.querySelectorAll('.stat-value')[0].textContent = goals;
+        document.querySelectorAll('.stat-value')[1].textContent = completedCount;
+        
+        // Atualizar média de progresso
+        let totalProgress = 0;
+        let activeWithProgress = 0;
+        
+        document.querySelectorAll('.goal-card:not(.completed)').forEach(card => {
+            const percentage = parseFloat(card.querySelector('.progress-percentage').textContent);
+            if (!isNaN(percentage)) {
+                totalProgress += percentage;
+                activeWithProgress++;
+            }
+        });
+        
+        const avgProgress = activeWithProgress > 0 ? Math.round(totalProgress / activeWithProgress) : 0;
+        const avgElement = document.querySelectorAll('.stat-value')[2];
+        avgElement.textContent = avgProgress + '%';
+        avgElement.className = `stat-value ${avgProgress >= 70 ? 'positive' : avgProgress >= 40 ? 'warning' : 'negative'}`;
+    }
+    
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `flash-message flash-${type}`;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+            <span>${message}</span>
+            <button class="flash-close" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        const container = document.querySelector('.flash-messages');
+        if (container) {
+            container.appendChild(notification);
+            
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+    }
+    
+    // Função para obter variáveis CSS
+    function var(name) {
+        return getComputedStyle(document.documentElement).getPropertyValue(name);
+    }
+</script>
+
+<style>
+    .executive-tooltip {
+        position: fixed;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        padding: 8px 12px;
+        border-radius: var(--border-radius-md);
+        font-size: var(--font-size-sm);
+        color: var(--text-primary);
+        z-index: 9999;
+        pointer-events: none;
+        animation: fadeIn 0.2s ease;
+        box-shadow: var(--elevation-2);
+        max-width: 300px;
+        white-space: pre-line;
+    }
+</style>
+{% endblock %}

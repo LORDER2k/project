@@ -1,0 +1,621 @@
+{% extends "base_executivo.html" %}
+
+{% block title %}Dashboard Executivo - ContaSmart Pro{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero-section {
+        min-height: 100vh;
+        background: linear-gradient(135deg, var(--bg-primary), #0f0f1a);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+    }
+
+    .hero-bg {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: 
+            radial-gradient(circle at 20% 50%, rgba(0, 102, 255, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 80% 20%, rgba(157, 0, 255, 0.1) 0%, transparent 50%),
+            radial-gradient(circle at 40% 80%, rgba(0, 255, 136, 0.1) 0%, transparent 50%);
+    }
+
+    .hero-grid {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: 
+            linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 50px 50px;
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        padding: var(--spacing-xxl) var(--spacing-xl);
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        background: rgba(0, 102, 255, 0.1);
+        border: 1px solid rgba(0, 102, 255, 0.3);
+        padding: var(--spacing-sm) var(--spacing-lg);
+        border-radius: 50px;
+        margin-bottom: var(--spacing-xl);
+        font-family: var(--font-mono);
+        font-size: var(--font-size-sm);
+        color: var(--primary-color);
+        animation: pulseGlow 2s infinite;
+    }
+
+    .hero-title {
+        font-size: 4rem;
+        font-weight: 800;
+        line-height: 1.1;
+        margin-bottom: var(--spacing-lg);
+        background: linear-gradient(45deg, #ffffff, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        background-size: 200% auto;
+        animation: textGradientFlow 3s ease infinite;
+    }
+
+    .hero-subtitle {
+        font-size: 1.5rem;
+        color: var(--text-secondary);
+        max-width: 700px;
+        margin: 0 auto var(--spacing-xxl);
+        line-height: 1.6;
+    }
+
+    .hero-stats {
+        display: flex;
+        justify-content: center;
+        gap: var(--spacing-xxl);
+        margin-bottom: var(--spacing-xxl);
+        flex-wrap: wrap;
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-number {
+        font-size: 3rem;
+        font-weight: 800;
+        background: var(--gradient-primary);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        line-height: 1;
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .stat-label {
+        font-size: var(--font-size-sm);
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-family: var(--font-mono);
+    }
+
+    .hero-actions {
+        display: flex;
+        gap: var(--spacing-lg);
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .features-section {
+        padding: var(--spacing-xxl) var(--spacing-xl);
+        background: var(--bg-secondary);
+        position: relative;
+    }
+
+    .section-title {
+        text-align: center;
+        margin-bottom: var(--spacing-xxl);
+    }
+
+    .section-title h2 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: var(--spacing-md);
+        background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .section-title p {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-xl);
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .feature-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-xl);
+        transition: all var(--transition-normal);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-8px);
+        border-color: var(--primary-color);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .feature-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: var(--border-radius-lg);
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .feature-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-md);
+        color: var(--text-primary);
+    }
+
+    .feature-description {
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .feature-list {
+        list-style: none;
+        margin-top: var(--spacing-lg);
+    }
+
+    .feature-list li {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-sm);
+        color: var(--text-secondary);
+    }
+
+    .feature-list li i {
+        color: var(--success-color);
+    }
+
+    .cta-section {
+        padding: var(--spacing-xxl) var(--spacing-xl);
+        background: linear-gradient(135deg, var(--bg-primary), #0a0a14);
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cta-card {
+        max-width: 800px;
+        margin: 0 auto;
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-xxl);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .cta-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+    }
+
+    .cta-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: var(--spacing-lg);
+        background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .cta-description {
+        font-size: 1.25rem;
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-xl);
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2.5rem;
+        }
+        
+        .hero-subtitle {
+            font-size: 1.25rem;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+        }
+        
+        .features-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .cta-card {
+            padding: var(--spacing-xl);
+        }
+        
+        .cta-title {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-bg"></div>
+    <div class="hero-grid"></div>
+    
+    <div class="hero-content">
+        <div class="hero-badge">
+            <i class="fas fa-rocket"></i>
+            <span>SISTEMA EXECUTIVO 2026</span>
+        </div>
+        
+        <h1 class="hero-title">
+            Gestão Financeira<br>
+            <span class="text-gradient">Executiva & Inteligente</span>
+        </h1>
+        
+        <p class="hero-subtitle">
+            Controle total das suas finanças com análise preditiva, IA avançada e 
+            visualizações executivas em tempo real.
+        </p>
+        
+        <div class="hero-stats">
+            <div class="stat-item">
+                <div class="stat-number">99.9%</div>
+                <div class="stat-label">Disponibilidade</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">2.4s</div>
+                <div class="stat-label">Tempo de Resposta</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">A+</div>
+                <div class="stat-label">Segurança</div>
+            </div>
+        </div>
+        
+        <div class="hero-actions">
+            {% if session.user_id %}
+                <a href="{{ url_for('dashboard') }}" class="neon-btn primary lg">
+                    <i class="fas fa-tachometer-alt"></i>
+                    ACESSAR DASHBOARD
+                </a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="neon-btn primary lg">
+                    <i class="fas fa-sign-in-alt"></i>
+                    ENTRAR NO SISTEMA
+                </a>
+                <a href="{{ url_for('register') }}" class="neon-btn outline lg">
+                    <i class="fas fa-user-plus"></i>
+                    CRIAR CONTA
+                </a>
+            {% endif %}
+            <a href="#features" class="neon-btn lg">
+                <i class="fas fa-chart-line"></i>
+                VER RECURSOS
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section id="features" class="features-section">
+    <div class="section-title">
+        <h2>Recursos Executivos</h2>
+        <p>Tecnologia avançada para gestão financeira de alto nível</p>
+    </div>
+    
+    <div class="features-grid">
+        <!-- Feature 1 -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-brain"></i>
+            </div>
+            <h3 class="feature-title">IA Financeira</h3>
+            <p class="feature-description">
+                Análise preditiva e recomendações inteligentes baseadas no seu comportamento financeiro.
+            </p>
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> Previsão de receitas e despesas</li>
+                <li><i class="fas fa-check"></i> Otimização de investimentos</li>
+                <li><i class="fas fa-check"></i> Alertas proativos</li>
+            </ul>
+        </div>
+        
+        <!-- Feature 2 -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-chart-network"></i>
+            </div>
+            <h3 class="feature-title">Dashboard Executivo</h3>
+            <p class="feature-description">
+                Visualizações interativas e painéis personalizáveis para tomada de decisão rápida.
+            </p>
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> Gráficos em tempo real</li>
+                <li><i class="fas fa-check"></i> KPIs personalizados</li>
+                <li><i class="fas fa-check"></i> Exportação executiva</li>
+            </ul>
+        </div>
+        
+        <!-- Feature 3 -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-shield-alt"></i>
+            </div>
+            <h3 class="feature-title">Segurança Máxima</h3>
+            <p class="feature-description">
+                Proteção bancária com criptografia de ponta a ponta e autenticação multifator.
+            </p>
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> Criptografia AES-256</li>
+                <li><i class="fas fa-check"></i> 2FA obrigatório</li>
+                <li><i class="fas fa-check"></i> Auditoria completa</li>
+            </ul>
+        </div>
+        
+        <!-- Feature 4 -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-bolt"></i>
+            </div>
+            <h3 class="feature-title">Performance</h3>
+            <p class="feature-description">
+                Processamento ultrarrápido com resposta em milissegundos e 99.9% de disponibilidade.
+            </p>
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> Latência < 50ms</li>
+                <li><i class="fas fa-check"></i> Escalabilidade automática</li>
+                <li><i class="fas fa-check"></i> Backup contínuo</li>
+            </ul>
+        </div>
+        
+        <!-- Feature 5 -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-mobile-alt"></i>
+            </div>
+            <h3 class="feature-title">Multiplataforma</h3>
+            <p class="feature-description">
+                Acesso completo de qualquer dispositivo com experiência otimizada para cada plataforma.
+            </p>
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> Web responsiva</li>
+                <li><i class="fas fa-check"></i> App iOS & Android</li>
+                <li><i class="fas fa-check"></i> Desktop nativo</li>
+            </ul>
+        </div>
+        
+        <!-- Feature 6 -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-robot"></i>
+            </div>
+            <h3 class="feature-title">Automação</h3>
+            <p class="feature-description">
+                Automatize processos financeiros e economize horas de trabalho manual.
+            </p>
+            <ul class="feature-list">
+                <li><i class="fas fa-check"></i> Reconhecimento de transações</li>
+                <li><i class="fas fa-check"></i> Categorização automática</li>
+                <li><i class="fas fa-check"></i> Relatórios programados</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="cta-card">
+        <h2 class="cta-title">Pronto para revolucionar sua gestão financeira?</h2>
+        <p class="cta-description">
+            Junte-se a milhares de executivos que já transformaram sua relação com o dinheiro 
+            usando nosso sistema de gestão financeira inteligente.
+        </p>
+        <div class="hero-actions">
+            {% if session.user_id %}
+                <a href="{{ url_for('dashboard') }}" class="neon-btn primary lg">
+                    <i class="fas fa-rocket"></i>
+                    IR PARA DASHBOARD
+                </a>
+            {% else %}
+                <a href="{{ url_for('register') }}" class="neon-btn primary lg">
+                    <i class="fas fa-user-plus"></i>
+                    CRIAR CONTA GRATUITA
+                </a>
+                <a href="{{ url_for('login') }}" class="neon-btn outline lg">
+                    <i class="fas fa-sign-in-alt"></i>
+                    ACESSAR SISTEMA
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Animações na landing page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animar elementos ao scroll
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+        
+        // Observar elementos para animação
+        document.querySelectorAll('.feature-card, .stat-item').forEach(el => {
+            el.classList.add('animate-on-scroll');
+            observer.observe(el);
+        });
+        
+        // Gerar partículas flutuantes
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.classList.add('float-particle');
+            particle.style.setProperty('--tx', `${Math.random() * 200 - 100}px`);
+            particle.style.setProperty('--ty', `${Math.random() * 200 - 100}px`);
+            particle.style.left = `${Math.random() * 100}%`;
+            particle.style.top = `${Math.random() * 100}%`;
+            particle.style.animationDelay = `${Math.random() * 5}s`;
+            particle.style.backgroundColor = Math.random() > 0.5 ? 'var(--primary-color)' : 'var(--secondary-color)';
+            document.querySelector('.hero-section').appendChild(particle);
+            
+            setTimeout(() => {
+                particle.remove();
+            }, 5000);
+        }
+        
+        // Criar partículas periodicamente
+        setInterval(createParticle, 500);
+        for (let i = 0; i < 20; i++) {
+            setTimeout(createParticle, i * 100);
+        }
+    });
+</script>
+{% endblock %}
+
+{% extends "base_executivo.html" %}
+
+{% block title %}ContaSmart Pro - Sistema Executivo Financeiro{% endblock %}
+{% block page_title %}Sistema Executivo Financeiro{% endblock %}
+{% block page_subtitle %}Gestão financeira avançada para tomada de decisões estratégicas{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="#">Página Inicial</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="welcome-message">
+    <div class="neon-card" style="text-align: center; padding: var(--spacing-xxl); max-width: 800px; margin: 0 auto;">
+        <div class="logo-icon" style="width: 80px; height: 80px; margin: 0 auto var(--spacing-lg);">
+            <i class="fas fa-chart-network" style="font-size: 2.5rem;"></i>
+        </div>
+        
+        <h1 style="font-size: 2.5rem; margin-bottom: var(--spacing-lg); background: linear-gradient(135deg, var(--primary-color), var(--accent-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+            ContaSmart<span style="background: var(--accent-color); color: var(--bg-primary); padding: 4px 8px; border-radius: 4px; font-size: 1.5rem; margin-left: 8px; -webkit-text-fill-color: var(--bg-primary);">PRO</span>
+        </h1>
+        
+        <p style="font-size: 1.2rem; color: var(--text-secondary); margin-bottom: var(--spacing-xl); line-height: 1.6;">
+            Sistema executivo de gestão financeira com análise preditiva, IA integrada e dashboards em tempo real para tomada de decisões estratégicas.
+        </p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-lg); margin-bottom: var(--spacing-xl);">
+            <div class="neon-card" style="text-align: center; padding: var(--spacing-lg);">
+                <i class="fas fa-tachometer-alt" style="font-size: 2rem; color: var(--primary-color); margin-bottom: var(--spacing-md); display: block;"></i>
+                <h3 style="margin-bottom: var(--spacing-sm);">Dashboard Inteligente</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Visão completa das finanças em tempo real</p>
+            </div>
+            
+            <div class="neon-card" style="text-align: center; padding: var(--spacing-lg);">
+                <i class="fas fa-robot" style="font-size: 2rem; color: var(--accent-color); margin-bottom: var(--spacing-md); display: block;"></i>
+                <h3 style="margin-bottom: var(--spacing-sm);">IA Financeira</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Recomendações inteligentes e previsões</p>
+            </div>
+            
+            <div class="neon-card" style="text-align: center; padding: var(--spacing-lg);">
+                <i class="fas fa-chart-line" style="font-size: 2rem; color: var(--success-color); margin-bottom: var(--spacing-md); display: block;"></i>
+                <h3 style="margin-bottom: var(--spacing-sm);">Análises Avançadas</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">Gráficos interativos e relatórios detalhados</p>
+            </div>
+        </div>
+        
+        {% if not session.get('user_id') %}
+        <div style="display: flex; gap: var(--spacing-lg); justify-content: center; flex-wrap: wrap; margin-top: var(--spacing-xl);">
+            <a href="{{ url_for('login') }}" class="neon-btn primary lg" style="padding: 12px 32px;">
+                <i class="fas fa-sign-in-alt"></i>
+                Fazer Login
+            </a>
+            <a href="{{ url_for('register') }}" class="neon-btn outline lg" style="padding: 12px 32px;">
+                <i class="fas fa-user-plus"></i>
+                Criar Conta Executiva
+            </a>
+            <a href="{{ url_for('about') }}" class="neon-btn sm" style="padding: 12px 32px;">
+                <i class="fas fa-info-circle"></i>
+                Saiba Mais
+            </a>
+        </div>
+        {% else %}
+        <div style="display: flex; gap: var(--spacing-lg); justify-content: center; flex-wrap: wrap; margin-top: var(--spacing-xl);">
+            <a href="{{ url_for('dashboard') }}" class="neon-btn primary lg" style="padding: 12px 32px;">
+                <i class="fas fa-tachometer-alt"></i>
+                Acessar Dashboard
+            </a>
+            <a href="{{ url_for('profile') }}" class="neon-btn outline lg" style="padding: 12px 32px;">
+                <i class="fas fa-user-tie"></i>
+                Meu Perfil
+            </a>
+        </div>
+        {% endif %}
+        
+        <div style="margin-top: var(--spacing-xl); padding-top: var(--spacing-xl); border-top: 1px solid var(--border-color);">
+            <p style="color: var(--text-muted); font-size: 0.9rem;">
+                <i class="fas fa-shield-alt"></i> Sistema seguro com criptografia SSL • 
+                <i class="fas fa-sync-alt"></i> Atualizações em tempo real • 
+                <i class="fas fa-mobile-alt"></i> Interface responsiva
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

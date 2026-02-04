@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block title %}Meu Perfil - ContaSmart Pro{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Cabeçalho do Perfil -->
+        <div class="col-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <div class="avatar-circle bg-primary text-white">
+                                <i class="fas fa-user fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <h2 class="mb-1">{{ user['username'] }}</h2>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-envelope me-2"></i>{{ user['email'] }}
+                            </p>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-calendar-alt me-2"></i>
+                                Membro desde {{ user['created_at'].strftime('%d/%m/%Y') if user['created_at'] else 'Data não disponível' }}
+                            </p>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-outline-primary">
+                                <i class="fas fa-edit me-2"></i>Editar Perfil
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Estatísticas Rápidas -->
+        <div class="col-md-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line text-primary me-2"></i>
+                        Estatísticas Financeiras
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="stat-card">
+                                <h6 class="text-muted">Saldo Atual</h6>
+                                <h3 class="{% if estatisticas.saldo_atual >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                    R$ {{ "%.2f"|format(estatisticas.saldo_atual) }}
+                                </h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="stat-card">
+                                <h6 class="text-muted">Total Receitas</h6>
+                                <h3 class="text-success">R$ {{ "%.2f"|format(estatisticas.total_receitas) }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="stat-card">
+                                <h6 class="text-muted">Total Despesas</h6>
+                                <h3 class="text-danger">R$ {{ "%.2f"|format(estatisticas.total_despesas) }}</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="stat-card">
+                                <h6 class="text-muted">Transações</h6>
+                                <h3 class="text-info">{{ estatisticas.total_transacoes }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Últimas Transações -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exchange-alt text-primary me-2"></i>
+                        Últimas Transações
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if transacoes %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Tipo</th>
+                                    <th>Categoria</th>
+                                    <th>Valor</th>
+                                    <th>Data</th>
+                                    <th>Descrição</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transacao in transacoes %}
+                                <tr>
+                                    <td>
+                                        <span class="badge {% if transacao.tipo == 'receita' %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ transacao.tipo|capitalize }}
+                                        </span>
+                                    </td>
+                                    <td>{{ transacao.categoria }}</td>
+                                    <td class="{% if transacao.tipo == 'receita' %}text-success{% else %}text-danger{% endif %}">
+                                        R$ {{ "%.2f"|format(transacao.valor) }}
+                                    </td>
+                                    <td>{{ transacao.data }}</td>
+                                    <td>{{ transacao.descricao[:30] }}{% if transacao.descricao|length > 30 %}...{% endif %}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Nenhuma transação registrada ainda.</p>
+                        <a href="{{ url_for('transacoes') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Criar Primeira Transação
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Coluna Lateral -->
+        <div class="col-md-4">
+            <!-- Metas em Andamento -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bullseye text-primary me-2"></i>
+                        Metas em Andamento
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if metas %}
+                        {% for meta in metas %}
+                        <div class="meta-item mb-3">
+                            <h6>{{ meta.titulo }}</h6>
+                            <div class="progress mb-2" style="height: 8px;">
+                                {% set progresso = (meta.valor_atual / meta.valor_meta * 100) if meta.valor_meta > 0 else 0 %}
+                                <div class="progress-bar bg-success" 
+                                     role="progressbar" 
+                                     style="width: {{ progresso }}%;"
+                                     aria-valuenow="{{ progresso }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-between small">
+                                <span>R$ {{ "%.2f"|format(meta.valor_atual) }} de R$ {{ "%.2f"|format(meta.valor_meta) }}</span>
+                                <span>{{ "%.0f"|format(progresso) }}%</span>
+                            </div>
+                            {% if meta.data_limite %}
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>
+                                Limite: {{ meta.data_limite }}
+                            </small>
+                            {% endif %}
+                        </div>
+                        {% if not loop.last %}<hr>{% endif %}
+                        {% endfor %}
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-bullseye fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">Nenhuma meta ativa.</p>
+                        <a href="{{ url_for('metas') }}" class="btn btn-outline-primary btn-sm">
+                            Criar Meta
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Atividades Recentes -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history text-primary me-2"></i>
+                        Atividade Recente
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <small class="text-muted">Hoje</small>
+                                <p class="mb-0">Dashboard atualizado</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-success"></div>
+                            <div class="timeline-content">
+                                <small class="text-muted">Ontem</small>
+                                <p class="mb-0">Nova transação registrada</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-info"></div>
+                            <div class="timeline-content">
+                                <small class="text-muted">2 dias atrás</small>
+                                <p class="mb-0">Meta atualizada</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ações Rápidas -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bolt text-primary me-2"></i>
+                        Ações Rápidas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('transacoes') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus-circle me-2"></i>Nova Transação
+                        </a>
+                        <a href="{{ url_for('metas') }}" class="btn btn-outline-success">
+                            <i class="fas fa-bullseye me-2"></i>Criar Meta
+                        </a>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-info">
+                            <i class="fas fa-chart-bar me-2"></i>Ver Dashboard
+                        </a>
+                        <a href="{{ url_for('ia_financeira') }}" class="btn btn-outline-warning">
+                            <i class="fas fa-robot me-2"></i>Consultar IA
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.stat-card {
+    text-align: center;
+    padding: 15px;
+    border-radius: 10px;
+    background: #f8f9fa;
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -30px;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.timeline-content {
+    padding-left: 10px;
+}
+
+.meta-item {
+    padding: 10px;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+</style>
+{% endblock %}
