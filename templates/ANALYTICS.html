@@ -1,0 +1,430 @@
+{% extends "base.html" %}
+
+{% block title %}Análises Avançadas - ContaSmart Pro{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/interactive.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-2">
+                        <i class="fas fa-chart-line text-primary me-2"></i>
+                        Análises Financeiras Avançadas
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Insights profundos e análises preditivas
+                    </p>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-calendar me-2"></i>
+                        {{ periodo|capitalize }} • {{ ano }}
+                        {% if periodo != 'anual' %}{{ mes }}{% endif %}
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="{{ url_for('analytics') }}?periodo=mensal&ano={{ ano }}&mes={{ mes }}">Mensal</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('analytics') }}?periodo=trimestral&ano={{ ano }}&mes={{ mes }}">Trimestral</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('analytics') }}?periodo=anual&ano={{ ano }}">Anual</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- KPIs Principais -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card border-start border-primary border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-uppercase text-muted mb-1">Tendência</h6>
+                            <h3 class="mb-0 text-primary">
+                                {% if tendencias.tendencia == 'positiva' %}↑{% else %}↓{% endif %}
+                            </h3>
+                            <small class="text-muted">{{ tendencias.tendencia|capitalize }}</small>
+                        </div>
+                        <div class="icon-circle bg-primary">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card border-start border-success border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-uppercase text-muted mb-1">Saldo Projetado</h6>
+                            <h3 class="mb-0 text-success">
+                                R$ {{ "%.2f"|format(previsoes.saldo_projetado) }}
+                            </h3>
+                            <small class="text-muted">Próximo mês</small>
+                        </div>
+                        <div class="icon-circle bg-success">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card border-start border-warning border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-uppercase text-muted mb-1">Potencial Economia</h6>
+                            <h3 class="mb-0 text-warning">
+                                R$ {{ "%.2f"|format(insights.economia.valor) }}
+                            </h3>
+                            <small class="text-muted">{{ insights.economia.percentual }}% possível</small>
+                        </div>
+                        <div class="icon-circle bg-warning">
+                            <i class="fas fa-piggy-bank"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stats-card border-start border-info border-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="flex-grow-1">
+                            <h6 class="text-uppercase text-muted mb-1">Hábitos Financeiros</h6>
+                            <h3 class="mb-0 text-info">
+                                {{ habitos|selectattr('true')|list|length }}/3
+                            </h3>
+                            <small class="text-muted">Boas práticas</small>
+                        </div>
+                        <div class="icon-circle bg-info">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráfico de Tendências -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar text-primary me-2"></i>
+                        Tendências dos Últimos 12 Meses
+                    </h5>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary active" onclick="changeTrendChart('line')">
+                            Linha
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="changeTrendChart('bar')">
+                            Barras
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 300px;">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                    <div class="text-center mt-3">
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Linha azul: Receitas | Linha vermelha: Despesas | Área verde: Saldo
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Análise de Categorias -->
+    <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie text-primary me-2"></i>
+                        Top 5 Despesas por Categoria
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                    <div class="mt-3" id="expenseLegend">
+                        {% for categoria in categorias_analise.despesas[:5] %}
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="color-dot me-2" style="background-color: {{ categoria.color }}"></div>
+                            <div class="flex-grow-1">
+                                <small>{{ categoria.name }}</small>
+                            </div>
+                            <div class="text-end">
+                                <small class="fw-bold">R$ {{ "%.2f"|format(categoria.total) }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie text-success me-2"></i>
+                        Top 5 Receitas por Categoria
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 250px;">
+                        <canvas id="incomeChart"></canvas>
+                    </div>
+                    <div class="mt-3" id="incomeLegend">
+                        {% for categoria in categorias_analise.receitas[:5] %}
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="color-dot me-2" style="background-color: {{ categoria.color }}"></div>
+                            <div class="flex-grow-1">
+                                <small>{{ categoria.name }}</small>
+                            </div>
+                            <div class="text-end">
+                                <small class="fw-bold">R$ {{ "%.2f"|format(categoria.total) }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Previsões e Insights -->
+    <div class="row mb-4">
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-crystal-ball text-primary me-2"></i>
+                        Previsões Financeiras
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="prediction-card">
+                                <h6>📊 Próximo Mês</h6>
+                                <div class="prediction-value text-primary">
+                                    R$ {{ "%.2f"|format(previsoes.saldo_projetado) }}
+                                </div>
+                                <small class="text-muted">Saldo projetado</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="prediction-card">
+                                <h6>💰 Média de Receitas</h6>
+                                <div class="prediction-value text-success">
+                                    R$ {{ "%.2f"|format(previsoes.receitas_media) }}
+                                </div>
+                                <small class="text-muted">Últimos 3 meses</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="prediction-card">
+                                <h6>💸 Média de Despesas</h6>
+                                <div class="prediction-value text-danger">
+                                    R$ {{ "%.2f"|format(previsoes.despesas_media) }}
+                                </div>
+                                <small class="text-muted">Últimos 3 meses</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="prediction-card">
+                                <h6>📈 Taxa de Poupança</h6>
+                                <div class="prediction-value text-warning">
+                                    {% if previsoes.receitas_media > 0 %}
+                                    {{ "%.1f"|format((previsoes.saldo_projetado / previsoes.receitas_media) * 100) }}%
+                                    {% else %}0%{% endif %}
+                                </div>
+                                <small class="text-muted">Do saldo projetado</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if previsoes.previsao_metas %}
+                    <hr>
+                    <h6 class="mt-3 mb-2">🎯 Previsão de Metas</h6>
+                    {% for meta in previsoes.previsao_metas %}
+                    <div class="alert alert-light mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ meta.titulo }}</strong><br>
+                                <small class="text-muted">
+                                    Necessário: R$ {{ "%.2f"|format(meta.valor_diario) }}/dia
+                                </small>
+                            </div>
+                            <span class="badge bg-info">{{ meta.dias_restantes }} dias</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb text-warning me-2"></i>
+                        Insights Automáticos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="insights-container">
+                        {% for insight in insights %}
+                        <div class="insight-item fade-in-up" style="animation-delay: {{ loop.index0 * 0.1 }}s">
+                            <div class="insight-icon">
+                                <i class="fas fa-lightbulb"></i>
+                            </div>
+                            <div class="insight-content">
+                                {{ insight|safe }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Análise de Hábitos -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-check text-primary me-2"></i>
+                        Análise de Hábitos Financeiros
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="habit-card {% if habitos.poupador %}active{% endif %}">
+                                <div class="habit-icon">
+                                    <i class="fas fa-piggy-bank"></i>
+                                </div>
+                                <h6>Poupador</h6>
+                                <small class="text-muted">Tem metas de poupança definidas</small>
+                                <div class="habit-status">
+                                    {% if habitos.poupador %}
+                                    <span class="badge bg-success">Ativo</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inativo</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="habit-card {% if habitos.investidor %}active{% endif %}">
+                                <div class="habit-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <h6>Investidor</h6>
+                                <small class="text-muted">Diversifica fontes de receita</small>
+                                <div class="habit-status">
+                                    {% if habitos.investidor %}
+                                    <span class="badge bg-success">Ativo</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inativo</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="habit-card {% if habitos.organizado %}active{% endif %}">
+                                <div class="habit-icon">
+                                    <i class="fas fa-clipboard-check"></i>
+                                </div>
+                                <h6>Organizado</h6>
+                                <small class="text-muted">Registra transações regularmente</small>
+                                <div class="habit-status">
+                                    {% if habitos.organizado %}
+                                    <span class="badge bg-success">Ativo</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Inativo</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if habitos.alertas %}
+                    <hr>
+                    <h6 class="mt-3 mb-2">⚠️ Alertas Importantes</h6>
+                    {% for alerta in habitos.alertas %}
+                    <div class="alert alert-warning alert-dismissible fade show mb-2">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        {{ alerta }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botão de Exportação -->
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="exportAnalyticsPDF()">
+                    <i class="fas fa-file-pdf me-2"></i>Exportar PDF
+                </button>
+                <button class="btn btn-success" onclick="exportAnalyticsExcel()">
+                    <i class="fas fa-file-excel me-2"></i>Exportar Excel
+                </button>
+                <button class="btn btn-info" onclick="shareAnalytics()">
+                    <i class="fas fa-share-alt me-2"></i>Compartilhar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script>
+// Dados para os gráficos
+const trendData = {{ tendencias.dados|tojson }};
+const categoriesData = {
+    expenses: {{ categorias_analise.despesas|tojson }},
+    incomes: {{ categorias_analise.receitas|tojson }}
+};
+
+// Inicializar gráficos
+document.addEventListener('DOMContentLoaded', function() {
+    renderTrendChart(trendData);
+    renderExpenseChart(categoriesData.expenses);
+    renderIncomeChart(categoriesData.incomes);
+    initAnalyticsFilters();
+});
+</script>
+{% endblock %}

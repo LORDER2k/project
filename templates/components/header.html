@@ -1,0 +1,48 @@
+<!-- Menu Toggle -->
+<button class="header-toggle" id="sidebar-toggle">
+    <i class="ri-menu-line"></i>
+</button>
+
+<!-- Título da Página -->
+<div class="header-title">
+    <h1 id="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+    <p class="header-subtitle" id="page-subtitle">
+        {% block page_subtitle %}Sistema de gestão contábil inteligente{% endblock %}
+    </p>
+</div>
+
+<!-- Ações do Header -->
+<div class="header-actions">
+    <!-- Busca -->
+    <div class="search-box">
+        <i class="ri-search-line"></i>
+        <input type="text" placeholder="Buscar relatórios, empresas..." id="global-search">
+    </div>
+    
+    <!-- Notificações -->
+    <div class="notification-dropdown">
+        <button class="btn-icon" id="notifications-btn">
+            <i class="ri-notification-3-line"></i>
+            <span class="badge" id="notification-count">3</span>
+        </button>
+    </div>
+    
+    <!-- Tema -->
+    <button class="btn-icon" id="theme-toggle">
+        <i class="ri-moon-line"></i>
+    </button>
+    
+    <!-- Usuário -->
+    <div class="user-dropdown">
+        <button class="user-btn" id="user-menu-btn">
+            <div class="user-avatar">
+                <span>AD</span>
+            </div>
+            <div class="user-info">
+                <span class="user-name">Administrador</span>
+                <span class="user-role">Super Admin</span>
+            </div>
+            <i class="ri-arrow-down-s-line"></i>
+        </button>
+    </div>
+</div>

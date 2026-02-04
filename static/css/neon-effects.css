@@ -1,0 +1,269 @@
+/* ===== EFEITOS NEON ESPECIAIS ===== */
+
+/* Efeito de texto neon */
+.neon-text {
+    color: var(--neon-blue);
+    text-shadow: 
+        0 0 5px var(--neon-blue),
+        0 0 10px var(--neon-blue),
+        0 0 20px var(--neon-blue),
+        0 0 40px var(--neon-blue);
+    animation: textGlow 2s ease-in-out infinite alternate;
+}
+
+.neon-text-purple {
+    color: var(--neon-purple);
+    text-shadow: 
+        0 0 5px var(--neon-purple),
+        0 0 10px var(--neon-purple),
+        0 0 20px var(--neon-purple),
+        0 0 40px var(--neon-purple);
+}
+
+.neon-text-green {
+    color: var(--neon-green);
+    text-shadow: 
+        0 0 5px var(--neon-green),
+        0 0 10px var(--neon-green),
+        0 0 20px var(--neon-green),
+        0 0 40px var(--neon-green);
+}
+
+@keyframes textGlow {
+    from {
+        text-shadow: 
+            0 0 5px var(--neon-blue),
+            0 0 10px var(--neon-blue),
+            0 0 20px var(--neon-blue);
+    }
+    to {
+        text-shadow: 
+            0 0 10px var(--neon-blue),
+            0 0 20px var(--neon-blue),
+            0 0 40px var(--neon-blue),
+            0 0 80px var(--neon-blue);
+    }
+}
+
+/* Efeito de borda neon */
+.neon-border {
+    position: relative;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    background: 
+        linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
+        linear-gradient(45deg, var(--neon-blue), var(--neon-purple)) border-box;
+}
+
+.neon-border-glow {
+    box-shadow: 
+        0 0 10px var(--neon-blue),
+        0 0 20px var(--neon-blue),
+        inset 0 0 10px var(--neon-blue);
+    animation: borderGlow 3s infinite alternate;
+}
+
+@keyframes borderGlow {
+    0%, 100% {
+        box-shadow: 
+            0 0 10px var(--neon-blue),
+            0 0 20px var(--neon-blue),
+            inset 0 0 10px var(--neon-blue);
+    }
+    50% {
+        box-shadow: 
+            0 0 20px var(--neon-purple),
+            0 0 40px var(--neon-purple),
+            inset 0 0 20px var(--neon-purple);
+    }
+}
+
+/* Efeito de partículas */
+.particles {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: var(--neon-blue);
+    border-radius: 50%;
+    animation: float 20s infinite linear;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(100vh) translateX(0);
+        opacity: 0;
+    }
+    10% {
+        opacity: 1;
+    }
+    90% {
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100px) translateX(100px);
+        opacity: 0;
+    }
+}
+
+/* Efeito de scanline */
+.scanline {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(to right, transparent, var(--neon-green), transparent);
+    z-index: 1001;
+    opacity: 0.3;
+    animation: scan 3s linear infinite;
+}
+
+@keyframes scan {
+    0% {
+        top: 0;
+    }
+    100% {
+        top: 100%;
+    }
+}
+
+/* Efeito de grid holográfico */
+.holographic-grid {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        linear-gradient(rgba(0, 243, 255, 0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 243, 255, 0.1) 1px, transparent 1px);
+    background-size: 50px 50px;
+    z-index: -2;
+    opacity: 0.3;
+}
+
+/* Efeito de pulso para notificações */
+.pulse-notification {
+    position: relative;
+}
+
+.pulse-notification::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 12px;
+    height: 12px;
+    background: var(--neon-pink);
+    border-radius: 50%;
+    animation: pulseDot 2s infinite;
+}
+
+@keyframes pulseDot {
+    0% {
+        transform: scale(0.8);
+        box-shadow: 0 0 0 0 rgba(255, 0, 255, 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(255, 0, 255, 0);
+    }
+    100% {
+        transform: scale(0.8);
+        box-shadow: 0 0 0 0 rgba(255, 0, 255, 0);
+    }
+}
+
+/* Efeito de digitação */
+.typewriter {
+    overflow: hidden;
+    border-right: 3px solid var(--neon-blue);
+    white-space: nowrap;
+    animation: typing 3.5s steps(40, end), blink-caret 0.75s step-end infinite;
+}
+
+@keyframes typing {
+    from { width: 0 }
+    to { width: 100% }
+}
+
+@keyframes blink-caret {
+    from, to { border-color: transparent }
+    50% { border-color: var(--neon-blue) }
+}
+
+/* Efeito de onda */
+.wave-effect {
+    position: relative;
+    overflow: hidden;
+}
+
+.wave-effect::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 5px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.4);
+    opacity: 0;
+    border-radius: 100%;
+    transform: scale(1, 1) translate(-50%);
+    transform-origin: 50% 50%;
+}
+
+.wave-effect:focus::after {
+    animation: ripple 1s ease-out;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(0, 0);
+        opacity: 0.5;
+    }
+    100% {
+        transform: scale(50, 50);
+        opacity: 0;
+    }
+}
+
+/* Efeito de brilho em hover */
+.glow-hover {
+    transition: all 0.3s ease;
+}
+
+.glow-hover:hover {
+    filter: brightness(1.2) drop-shadow(0 0 10px currentColor);
+}
+
+/* Efeito de luz de neon que pisca */
+.neon-sign {
+    color: var(--neon-blue);
+    text-shadow: 
+        0 0 7px var(--neon-blue),
+        0 0 10px var(--neon-blue),
+        0 0 21px var(--neon-blue);
+    animation: flicker 1.5s infinite alternate;
+}
+
+@keyframes flicker {
+    0%, 18%, 22%, 25%, 53%, 57%, 100% {
+        text-shadow: 
+            0 0 7px var(--neon-blue),
+            0 0 10px var(--neon-blue),
+            0 0 21px var(--neon-blue);
+    }
+    20%, 24%, 55% {
+        text-shadow: none;
+    }
+}

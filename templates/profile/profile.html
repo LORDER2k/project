@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+
+{% block title %}Meu Perfil - ContaSmart Pro{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Cabeçalho do Perfil -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card-custom">
+                <div class="card-body-custom">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <div class="avatar-circle bg-primary text-white d-flex align-items-center justify-content-center" 
+                                 style="width: 100px; height: 100px; border-radius: 50%; font-size: 2.5rem;">
+                                <i class="fas fa-user"></i>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <h2 class="mb-1">{{ user.full_name or user.username }}</h2>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-envelope me-2"></i>{{ user.email }}
+                            </p>
+                            <p class="text-muted mb-0">
+                                <i class="fas fa-calendar-alt me-2"></i>
+                                Membro desde {{ user.created_at[:10] if user.created_at else 'Data não disponível' }}
+                            </p>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-custom-outline" data-bs-toggle="modal" data-bs-target="#editProfileModal">
+                                <i class="fas fa-edit me-2"></i>Editar Perfil
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Estatísticas -->
+        <div class="col-lg-8 mb-4">
+            <div class="card-custom">
+                <div class="card-header-custom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        Minhas Estatísticas
+                    </h5>
+                </div>
+                <div class="card-body-custom">
+                    <div class="row">
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="stat-value text-primary">
+                                    {{ "%.0f"|format((stats.total_income/(stats.total_income+stats.total_expense)*100) if (stats.total_income+stats.total_expense) > 0 else 0) }}%
+                                </div>
+                                <div class="stat-label">Receitas</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="stat-value text-danger">
+                                    {{ "%.0f"|format((stats.total_expense/(stats.total_income+stats.total_expense)*100) if (stats.total_income+stats.total_expense) > 0 else 0) }}%
+                                </div>
+                                <div class="stat-label">Despesas</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="stat-value text-warning">
+                                    {{ "%.0f"|format((stats.total_tax/stats.total_income*100) if stats.total_income > 0 else 0) }}%
+                                </div>
+                                <div class="stat-label">Impostos</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-3">
+                            <div class="text-center">
+                                <div class="stat-value text-info">
+                                    {{ stats.total_goals }}
+                                </div>
+                                <div class="stat-label">Metas Ativas</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Gráfico de Distribuição -->
+                    <div class="mt-4">
+                        <h6>Distribuição Financeira</h6>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <canvas id="distributionChart" height="200"></canvas>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="legend">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="color-box me-2" style="background-color: #4ade80; width: 12px; height: 12px;"></div>
+                                        <span>Receitas: R$ {{ "%.2f"|format(stats.total_income) }}</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="color-box me-2" style="background-color: #ef4444; width: 12px; height: 12px;"></div>
+                                        <span>Despesas: R$ {{ "%.2f"|format(stats.total_expense) }}</span>
+                                    </div>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="color-box me-2" style="background-color: #f59e0b; width: 12px; height: 12px;"></div>
+                                        <span>Impostos: R$ {{ "%.2f"|format(stats.total_tax) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Atividade Recente -->
+            <div class="card-custom mt-4">
+                <div class="card-header-custom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2"></i>
+                        Atividade Recente
+                    </h5>
+                </div>
+                <div class="card-body-custom">
+                    {% if activity %}
+                    <div class="timeline">
+                        {% for item in activity %}
+                        <div class="timeline-item mb-3">
+                            <div class="d-flex">
+                                <div class="timeline-marker me-3">
+                                    <div class="circle {% if item.type == 'transaction' %}bg-primary{% else %}bg-success{% endif %}" 
+                                         style="width: 12px; height: 12px; border-radius: 50%;"></div>
+                                </div>
+                                <div class="timeline-content flex-grow-1">
+                                    <div class="d-flex justify-content-between">
+                                        <h6 class="mb-1">
+                                            {% if item.type == 'transaction' %}
+                                                <i class="fas fa-exchange-alt me-1"></i>
+                                            {% else %}
+                                                <i class="fas fa-bullseye me-1"></i>
+                                            {% endif %}
+                                            {{ item.type|capitalize }}
+                                        </h6>
+                                        <small class="text-muted">{{ item.created_at[:16] }}</small>
+                                    </div>
+                                    <p class="mb-0 text-muted">{{ item.description }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">Nenhuma atividade recente.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Coluna Lateral -->
+        <div class="col-lg-4 mb-4">
+            <!-- Informações da Conta -->
+            <div class="card-custom mb-4">
+                <div class="card-header-custom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-cog me-2"></i>
+                        Informações da Conta
+                    </h5>
+                </div>
+                <div class="card-body-custom">
+                    <div class="info-item mb-3">
+                        <label class="text-muted small">Nome de Usuário</label>
+                        <p class="mb-0">{{ user.username }}</p>
+                    </div>
+                    
+                    <div class="info-item mb-3">
+                        <label class="text-muted small">Email</label>
+                        <p class="mb-0">{{ user.email }}</p>
+                    </div>
+                    
+                    <div class="info-item mb-3">
+                        <label class="text-muted small">Tema Preferido</label>
+                        <p class="mb-0">
+                            <span class="badge {% if user.theme == 'dark' %}bg-dark{% else %}bg-light text-dark{% endif %}">
+                                {{ user.theme|capitalize }}
+                            </span>
+                        </p>
+                    </div>
+                    
+                    <div class="info-item mb-3">
+                        <label class="text-muted small">Moeda</label>
+                        <p class="mb-0">{{ user.currency }}</p>
+                    </div>
+                    
+                    <div class="info-item">
+                        <label class="text-muted small">Idioma</label>
+                        <p class="mb-0">{{ user.language }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Metas Recentes -->
+            <div class="card-custom">
+                <div class="card-header-custom">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bullseye me-2"></i>
+                        Minhas Metas
+                    </h5>
+                </div>
+                <div class="card-body-custom">
+                    {% if goals %}
+                        {% for meta in goals[:3] %}
+                        <div class="mb-3">
+                            <h6>{{ meta.title }}</h6>
+                            <div class="progress-custom mb-2">
+                                {% set progresso = (meta.current_amount / meta.target_amount * 100) if meta.target_amount > 0 else 0 %}
+                                <div class="progress-bar-custom" style="width: {{ progresso }}%;"></div>
+                            </div>
+                            <div class="d-flex justify-content-between small text-muted">
+                                <span>{{ "%.0f"|format(progresso) }}%</span>
+                                <span>R$ {{ "%.2f"|format(meta.current_amount) }} / R$ {{ "%.2f"|format(meta.target_amount) }}</span>
+                            </div>
+                        </div>
+                        {% if not loop.last %}<hr class="my-2">{% endif %}
+                        {% endfor %}
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('goals') }}" class="btn btn-sm btn-custom-outline">
+                                Ver Todas as Metas
+                            </a>
+                        </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-bullseye fa-2x text-muted mb-2"></i>
+                        <p class="text-muted">Nenhuma meta definida.</p>
+                        <a href="{{ url_for('goals') }}" class="btn btn-sm btn-custom-primary">
+                            Criar Meta
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Edição de Perfil -->
+<div class="modal fade" id="editProfileModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Editar Perfil</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="mb-3">
+                        <label class="form-label">Nome Completo</label>
+                        <input type="text" class="form-control-custom" value="{{ user.full_name or '' }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input type="email" class="form-control-custom" value="{{ user.email }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tema</label>
+                        <select class="form-control-custom">
+                            <option value="light" {% if user.theme == 'light' %}selected{% endif %}>Claro</option>
+                            <option value="dark" {% if user.theme == 'dark' %}selected{% endif %}>Escuro</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+}
+
+.timeline-item {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.circle {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.info-item label {
+    font-size: 0.875rem;
+}
+
+.color-box {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+</style>
+
+<script>
+// Gráfico de distribuição
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('distributionChart');
+    if (!ctx) return;
+    
+    const income = {{ stats.total_income }};
+    const expense = {{ stats.total_expense }};
+    const tax = {{ stats.total_tax }};
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Receitas', 'Despesas', 'Impostos'],
+            datasets: [{
+                data: [income, expense, tax],
+                backgroundColor: [
+                    '#4ade80',
+                    '#ef4444',
+                    '#f59e0b'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            let label = context.label || '';
+                            if (label) {
+                                label += ': ';
+                            }
+                            label += formatCurrency(context.parsed);
+                            return label;
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,190 @@
+/* ===== SOBRESCRITA DE CORES NEON ===== */
+/* Aplica cores neon em elementos específicos sem modificar o HTML */
+
+/* Textos neon */
+h1, h2, h3, h4, h5, h6 {
+    color: #ffffff !important;
+    position: relative !important;
+}
+
+h1::after, h2::after, h3::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 50px;
+    height: 3px;
+    background: var(--gradient-executive) !important;
+    border-radius: 2px;
+}
+
+/* Links neon */
+a:not(.btn):not(.nav-link) {
+    color: var(--executive-cyan) !important;
+    text-decoration: none !important;
+    position: relative !important;
+    transition: all 0.3s ease !important;
+}
+
+a:not(.btn):not(.nav-link)::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--executive-cyan) !important;
+    transition: width 0.3s ease !important;
+}
+
+a:not(.btn):not(.nav-link):hover::after {
+    width: 100% !important;
+}
+
+/* Ícones neon */
+i.fas, i.far, i.fab {
+    color: var(--executive-cyan) !important;
+    transition: all 0.3s ease !important;
+}
+
+i.fas:hover, i.far:hover, i.fab:hover {
+    text-shadow: 0 0 10px var(--executive-cyan) !important;
+    transform: scale(1.1) !important;
+}
+
+/* Alertas neon */
+.alert {
+    border: none !important;
+    border-radius: 10px !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.alert-success {
+    background: rgba(0, 255, 136, 0.1) !important;
+    border-left: 4px solid var(--executive-green) !important;
+    color: var(--executive-green) !important;
+}
+
+.alert-danger {
+    background: rgba(255, 51, 102, 0.1) !important;
+    border-left: 4px solid var(--executive-red) !important;
+    color: var(--executive-red) !important;
+}
+
+.alert-warning {
+    background: rgba(255, 193, 7, 0.1) !important;
+    border-left: 4px solid #ffc107 !important;
+    color: #ffc107 !important;
+}
+
+.alert-info {
+    background: rgba(0, 255, 255, 0.1) !important;
+    border-left: 4px solid var(--executive-cyan) !important;
+    color: var(--executive-cyan) !important;
+}
+
+/* Cards especiais */
+.card.bg-primary, .card.bg-success, .card.bg-danger, .card.bg-warning, .card.bg-info {
+    border: none !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.card.bg-primary::before,
+.card.bg-success::before,
+.card.bg-danger::before,
+.card.bg-warning::before,
+.card.bg-info::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.1) 50%,
+        transparent 70%
+    );
+    transform: rotate(45deg);
+    animation: shine 3s infinite linear;
+}
+
+@keyframes shine {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+/* Efeitos de hover em linhas da tabela */
+.table tbody tr {
+    transition: all 0.3s ease !important;
+}
+
+.table tbody tr:hover {
+    background: rgba(0, 255, 255, 0.05) !important;
+    box-shadow: inset 0 0 20px rgba(0, 255, 255, 0.1) !important;
+}
+
+/* Inputs com glow */
+.form-control:focus {
+    border-color: var(--executive-cyan) !important;
+    box-shadow: 0 0 0 0.2rem rgba(0, 255, 255, 0.25) !important;
+}
+
+/* Botões com gradiente */
+.btn-primary {
+    background: var(--gradient-executive) !important;
+    border: none !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.btn-primary::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.3) 50%,
+        transparent 70%
+    );
+    transform: rotate(45deg);
+    animation: shine 3s infinite linear;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, var(--executive-green) 0%, #00cc66 100%) !important;
+    border: none !important;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--executive-red) 0%, #ff0066 100%) !important;
+    border: none !important;
+}
+
+/* Progress bars animadas */
+.progress-bar {
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    animation: loading 2s infinite linear;
+}
+
+@keyframes loading {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}

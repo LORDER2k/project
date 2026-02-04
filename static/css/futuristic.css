@@ -1,0 +1,377 @@
+/* ===== SITE EXECUTIVO FUTRURISTICO ===== */
+/* Sobrescreve estilos existentes sem modificar arquivos originais */
+
+:root {
+    /* Cores Executivas Neon */
+    --executive-blue: #0066ff;
+    --executive-cyan: #00ffff;
+    --executive-purple: #9d00ff;
+    --executive-green: #00ff88;
+    --executive-red: #ff3366;
+    
+    /* Gradientes Executivos */
+    --gradient-executive: linear-gradient(135deg, var(--executive-blue) 0%, var(--executive-purple) 100%);
+    --gradient-dark: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%);
+    --gradient-card: linear-gradient(135deg, rgba(0, 102, 255, 0.1) 0%, rgba(157, 0, 255, 0.1) 100%);
+    
+    /* Efeitos Glow */
+    --glow-blue: 0 0 20px rgba(0, 102, 255, 0.5);
+    --glow-cyan: 0 0 20px rgba(0, 255, 255, 0.5);
+    --glow-purple: 0 0 20px rgba(157, 0, 255, 0.5);
+}
+
+/* ===== OVERRIDE DO LAYOUT ===== */
+body.executive-mode {
+    background: var(--gradient-dark) !important;
+    color: #ffffff !important;
+    font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif !important;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image: 
+        radial-gradient(circle at 10% 20%, rgba(0, 102, 255, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(157, 0, 255, 0.15) 0%, transparent 40%) !important;
+}
+
+/* ===== NAVBAR EXECUTIVA ===== */
+.navbar.executive-navbar {
+    background: rgba(10, 10, 30, 0.9) !important;
+    backdrop-filter: blur(20px) !important;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.3) !important;
+    box-shadow: var(--glow-cyan) !important;
+    padding: 1rem 0 !important;
+}
+
+.navbar-brand.executive-brand {
+    color: var(--executive-cyan) !important;
+    font-weight: 800 !important;
+    font-size: 1.8rem !important;
+    letter-spacing: 1px;
+    text-shadow: 0 0 10px var(--executive-cyan) !important;
+}
+
+.navbar-brand.executive-brand i {
+    animation: pulse 2s infinite !important;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.nav-link.executive-link {
+    color: rgba(255, 255, 255, 0.8) !important;
+    padding: 0.5rem 1rem !important;
+    margin: 0 0.5rem !important;
+    border-radius: 20px !important;
+    transition: all 0.3s ease !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+.nav-link.executive-link:hover {
+    color: var(--executive-cyan) !important;
+    background: rgba(0, 255, 255, 0.1) !important;
+}
+
+.nav-link.executive-link.active {
+    color: var(--executive-cyan) !important;
+    background: rgba(0, 255, 255, 0.15) !important;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.3) !important;
+}
+
+/* ===== CARDS EXECUTIVOS ===== */
+.card.executive-card {
+    background: var(--gradient-card) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(0, 255, 255, 0.2) !important;
+    border-radius: 20px !important;
+    overflow: hidden !important;
+    position: relative !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.card.executive-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.card.executive-card:hover::before {
+    left: 100%;
+}
+
+.card.executive-card:hover {
+    transform: translateY(-8px) scale(1.02) !important;
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.3),
+        var(--glow-cyan) !important;
+    border-color: var(--executive-cyan) !important;
+}
+
+.card-header.executive-header {
+    background: rgba(0, 0, 0, 0.3) !important;
+    border-bottom: 1px solid rgba(0, 255, 255, 0.2) !important;
+    padding: 1.5rem !important;
+    font-weight: 700 !important;
+    color: var(--executive-cyan) !important;
+}
+
+.card-header.executive-header i {
+    margin-right: 10px;
+    font-size: 1.2em;
+}
+
+/* ===== BOTÕES EXECUTIVOS ===== */
+.btn.executive-btn {
+    background: transparent !important;
+    color: var(--executive-cyan) !important;
+    border: 2px solid var(--executive-cyan) !important;
+    padding: 10px 25px !important;
+    border-radius: 25px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    transition: all 0.4s ease !important;
+}
+
+.btn.executive-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.2), transparent);
+    transition: left 0.6s ease;
+}
+
+.btn.executive-btn:hover::before {
+    left: 100%;
+}
+
+.btn.executive-btn:hover {
+    background: rgba(0, 255, 255, 0.1) !important;
+    box-shadow: 
+        0 0 25px rgba(0, 255, 255, 0.4),
+        inset 0 0 15px rgba(0, 255, 255, 0.1) !important;
+    transform: translateY(-3px) !important;
+}
+
+.btn.executive-btn-primary {
+    background: var(--gradient-executive) !important;
+    color: white !important;
+    border: none !important;
+}
+
+.btn.executive-btn-primary:hover {
+    background: linear-gradient(135deg, var(--executive-purple) 0%, var(--executive-blue) 100%) !important;
+    box-shadow: 
+        0 0 30px rgba(157, 0, 255, 0.5),
+        inset 0 0 20px rgba(255, 255, 255, 0.1) !important;
+}
+
+/* ===== TABELAS EXECUTIVAS ===== */
+.table.executive-table {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 15px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(0, 255, 255, 0.1) !important;
+}
+
+.table.executive-table thead {
+    background: rgba(0, 102, 255, 0.2) !important;
+    border-bottom: 2px solid var(--executive-cyan) !important;
+}
+
+.table.executive-table th {
+    color: var(--executive-cyan) !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    padding: 1rem !important;
+    border: none !important;
+}
+
+.table.executive-table td {
+    padding: 1rem !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+    transition: all 0.3s ease !important;
+}
+
+.table.executive-table tbody tr:hover td {
+    background: rgba(0, 255, 255, 0.05) !important;
+    transform: translateX(5px) !important;
+}
+
+/* ===== ESTATÍSTICAS EXECUTIVAS ===== */
+.stats-card.executive-stats {
+    border: none !important;
+    border-radius: 15px !important;
+    padding: 1.5rem !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(10px) !important;
+    border-left: 4px solid var(--executive-cyan) !important;
+    transition: all 0.3s ease !important;
+}
+
+.stats-card.executive-stats:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 10px 25px rgba(0, 255, 255, 0.2) !important;
+    border-left-color: var(--executive-purple) !important;
+}
+
+.stats-card.executive-stats .stat-value {
+    font-size: 2.2rem !important;
+    font-weight: 800 !important;
+    background: var(--gradient-executive) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    margin: 0.5rem 0 !important;
+}
+
+.stats-card.executive-stats .stat-label {
+    color: rgba(255, 255, 255, 0.7) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    font-size: 0.85rem !important;
+}
+
+/* ===== GRÁFICOS EXECUTIVOS ===== */
+.chart-container.executive-chart {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border-radius: 15px !important;
+    padding: 1.5rem !important;
+    border: 1px solid rgba(0, 255, 255, 0.2) !important;
+    position: relative !important;
+}
+
+.chart-container.executive-chart::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--gradient-executive) !important;
+}
+
+/* ===== FORMULÁRIOS EXECUTIVOS ===== */
+.form-control.executive-input {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 10px !important;
+    color: white !important;
+    padding: 12px 15px !important;
+    transition: all 0.3s ease !important;
+}
+
+.form-control.executive-input:focus {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: var(--executive-cyan) !important;
+    box-shadow: 0 0 20px rgba(0, 255, 255, 0.2) !important;
+    color: white !important;
+}
+
+.form-control.executive-input::placeholder {
+    color: rgba(255, 255, 255, 0.4) !important;
+}
+
+/* ===== BADGES EXECUTIVOS ===== */
+.badge.executive-badge {
+    padding: 5px 12px !important;
+    border-radius: 20px !important;
+    font-weight: 600 !important;
+    font-size: 0.8rem !important;
+    letter-spacing: 0.5px !important;
+    border: 1px solid transparent !important;
+}
+
+.badge-income.executive-badge {
+    background: rgba(0, 255, 136, 0.1) !important;
+    color: var(--executive-green) !important;
+    border-color: var(--executive-green) !important;
+}
+
+.badge-expense.executive-badge {
+    background: rgba(255, 51, 102, 0.1) !important;
+    color: var(--executive-red) !important;
+    border-color: var(--executive-red) !important;
+}
+
+/* ===== PROGRESS BARS EXECUTIVAS ===== */
+.progress.executive-progress {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 10px !important;
+    height: 10px !important;
+    overflow: hidden !important;
+}
+
+.progress-bar.executive-progress-bar {
+    background: var(--gradient-executive) !important;
+    border-radius: 10px !important;
+}
+
+/* ===== FOOTER EXECUTIVO ===== */
+footer.executive-footer {
+    background: rgba(10, 10, 30, 0.9) !important;
+    backdrop-filter: blur(20px) !important;
+    border-top: 1px solid rgba(0, 255, 255, 0.2) !important;
+    padding: 2rem 0 !important;
+    margin-top: 3rem !important;
+}
+
+/* ===== ANIMAÇÕES EXECUTIVAS ===== */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 20px rgba(0, 102, 255, 0.3); }
+    50% { box-shadow: 0 0 40px rgba(0, 102, 255, 0.6); }
+}
+
+.animate-slide-up {
+    animation: slideInUp 0.6s ease forwards !important;
+}
+
+.animate-fade-in {
+    animation: fadeIn 0.8s ease forwards !important;
+}
+
+.animate-glow {
+    animation: glowPulse 2s infinite !important;
+}
+
+/* ===== RESPONSIVIDADE ===== */
+@media (max-width: 768px) {
+    .navbar-brand.executive-brand {
+        font-size: 1.4rem !important;
+    }
+    
+    .stats-card.executive-stats .stat-value {
+        font-size: 1.8rem !important;
+    }
+    
+    .card.executive-card {
+        margin-bottom: 1.5rem !important;
+    }
+}

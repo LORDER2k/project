@@ -1,0 +1,20 @@
+{
+  "empresa": {
+    "id": "EMP001",
+    "cnpj": "12.345.678/0001-90",
+    "razao_social": "EMPRESA ABC LTDA",
+    "nome_fantasia": "ABC SOLUÇÕES",
+    "data_fundacao": "2010-05-15",
+    "data_cadastro": "2026-02-03",
+    "status": "ativa",
+    "contato": {
+      "email": "contato@empresaabc.com",
+      "telefone": "(11) 99999-9999"
+    }
+  },
+  "configuracoes_contabeis": {
+    "setor": "tecnologia",
+    "regime_tributario": "lucro_real",
+    "contador_responsavel": "Carlos Silva"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "template_id": "TMP_DRE_001",
+  "nome": "Template DRE Padrão",
+  "descricao": "Modelo padrão para Demonstração do Resultado do Exercício",
+  "estrutura": {
+    "receitas": [
+      "receita_bruta",
+      "deducoes",
+      "receita_liquida"
+    ],
+    "custos": [
+      "custo_vendas",
+      "lucro_bruto"
+    ],
+    "despesas": [
+      "operacionais",
+      "financeiras"
+    ],
+    "resultado": [
+      "lucro_liquido",
+      "margem_liquida"
+    ]
+  }
+}

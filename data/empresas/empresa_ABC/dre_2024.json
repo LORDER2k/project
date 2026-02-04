@@ -1,0 +1,206 @@
+{
+  "meta": {
+    "empresa_id": "EMP001",
+    "empresa_nome": "EMPRESA ABC LTDA",
+    "periodo": "2024-01",
+    "data_criacao": "2024-01-15T10:30:00",
+    "data_atualizacao": "2024-01-15T10:30:00",
+    "tipo": "dre_mensal",
+    "versao": "1.0.0",
+    "status": "preliminar"
+  },
+  "cabecalho": {
+    "exercicio": "2024",
+    "mes_referencia": "01",
+    "moeda": "BRL",
+    "unidade_monetaria": "mil"
+  },
+  "demonstrativo": {
+    "receitas": {
+      "receita_operacional_bruta": {
+        "descricao": "Receita Operacional Bruta",
+        "valor": 125000.00,
+        "percentual_receita": 100.00,
+        "observacao": "Vendas de produtos e serviços"
+      },
+      "deducoes": {
+        "descricao": "Deduções da Receita Bruta",
+        "valor": 7500.00,
+        "percentual_receita": 6.00,
+        "detalhes": {
+          "impostos_sobre_vendas": 6250.00,
+          "devolucoes": 1000.00,
+          "descontos": 250.00
+        }
+      },
+      "receita_operacional_liquida": {
+        "descricao": "Receita Operacional Líquida",
+        "valor": 117500.00,
+        "percentual_receita": 94.00,
+        "calculado": true
+      }
+    },
+    "custos": {
+      "custo_produtos_vendidos": {
+        "descricao": "Custo dos Produtos Vendidos",
+        "valor": 50000.00,
+        "percentual_receita": 40.00,
+        "detalhes": {
+          "materia_prima": 30000.00,
+          "mao_de_obra_direta": 15000.00,
+          "custos_indiretos": 5000.00
+        }
+      },
+      "lucro_bruto": {
+        "descricao": "Lucro Bruto",
+        "valor": 67500.00,
+        "percentual_receita": 54.00,
+        "calculado": true,
+        "margem_bruta": 57.45
+      }
+    },
+    "despesas_operacionais": {
+      "despesas_vendas": {
+        "descricao": "Despesas com Vendas",
+        "valor": 15000.00,
+        "percentual_receita": 12.00,
+        "detalhes": {
+          "comissoes": 8000.00,
+          "propaganda": 5000.00,
+          "frete": 2000.00
+        }
+      },
+      "despesas_administrativas": {
+        "descricao": "Despesas Administrativas",
+        "valor": 25000.00,
+        "percentual_receita": 20.00,
+        "detalhes": {
+          "salarios": 18000.00,
+          "aluguel": 5000.00,
+          "telefone_internet": 2000.00
+        }
+      },
+      "total_despesas_operacionais": {
+        "descricao": "Total Despesas Operacionais",
+        "valor": 40000.00,
+        "percentual_receita": 32.00,
+        "calculado": true
+      },
+      "lucro_operacional": {
+        "descricao": "Lucro Operacional (LAIR)",
+        "valor": 27500.00,
+        "percentual_receita": 22.00,
+        "calculado": true,
+        "margem_operacional": 23.40
+      }
+    },
+    "resultado_financeiro": {
+      "receitas_financeiras": {
+        "descricao": "Receitas Financeiras",
+        "valor": 1500.00,
+        "percentual_receita": 1.20
+      },
+      "despesas_financeiras": {
+        "descricao": "Despesas Financeiras",
+        "valor": 3000.00,
+        "percentual_receita": 2.40,
+        "detalhes": {
+          "juros_emprestimos": 2500.00,
+          "tarifas_bancarias": 500.00
+        }
+      },
+      "resultado_financeiro_liquido": {
+        "descricao": "Resultado Financeiro Líquido",
+        "valor": -1500.00,
+        "percentual_receita": -1.20,
+        "calculado": true
+      }
+    },
+    "impostos": {
+      "imposto_renda": {
+        "descricao": "Imposto de Renda",
+        "valor": 3900.00,
+        "percentual_receita": 3.12,
+        "aliquota": 15.0
+      },
+      "contribuicao_social": {
+        "descricao": "Contribuição Social",
+        "valor": 2340.00,
+        "percentual_receita": 1.87,
+        "aliquota": 9.0
+      },
+      "total_impostos": {
+        "descricao": "Total de Impostos",
+        "valor": 6240.00,
+        "percentual_receita": 4.99,
+        "calculado": true
+      }
+    },
+    "resultado_liquido": {
+      "lucro_liquido_exercicio": {
+        "descricao": "Lucro Líquido do Exercício",
+        "valor": 19760.00,
+        "percentual_receita": 15.81,
+        "calculado": true,
+        "margem_liquida": 16.82
+      }
+    }
+  },
+  "indicadores": {
+    "rentabilidade": {
+      "margem_bruta": 57.45,
+      "margem_operacional": 23.40,
+      "margem_liquida": 16.82,
+      "roi": 12.5,
+      "roe": 18.2
+    },
+    "eficiencia": {
+      "giro_estoque": 4.2,
+      "prazo_medio_recebimento": 45,
+      "prazo_medio_pagamento": 60,
+      "ciclo_financeiro": 25
+    },
+    "analise_comparativa": {
+      "vs_meta": {
+        "margem_liquida": {
+          "real": 16.82,
+          "meta": 15.0,
+          "variacao": 1.82,
+          "atingimento": 112.13
+        },
+        "lucro_liquido": {
+          "real": 19760.00,
+          "meta": 18750.00,
+          "variacao": 1010.00,
+          "atingimento": 105.39
+        }
+      },
+      "vs_mes_anterior": {
+        "receita": {
+          "atual": 125000.00,
+          "anterior": 115000.00,
+          "crescimento": 8.70
+        },
+        "lucro_liquido": {
+          "atual": 19760.00,
+          "anterior": 17250.00,
+          "crescimento": 14.55
+        }
+      }
+    }
+  },
+  "observacoes": [
+    "Crescimento de 8.7% na receita em relação ao mês anterior",
+    "Margem líquida acima da meta estabelecida",
+    "Redução de 2% nas despesas administrativas",
+    "Aumento de 15% nas receitas financeiras"
+  ],
+  "assinaturas": {
+    "elaborado_por": "Maria Santos",
+    "cargo_elaborador": "Analista Contábil",
+    "revisado_por": "João Silva",
+    "cargo_revisor": "Gerente Financeiro",
+    "data_elaboracao": "2024-01-15",
+    "data_revisao": "2024-01-16"
+  }
+}

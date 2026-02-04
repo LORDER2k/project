@@ -1,0 +1,189 @@
+{% extends "base_futuristic.html" %}
+
+{% block title %}Registro - ContaSmart Pro Futuristic{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="glass-card neon-border p-5 mt-4 animate-slide-up">
+                <!-- Logo -->
+                <div class="text-center mb-4">
+                    <h1 class="neon-text display-4">
+                        <i class="fas fa-user-plus"></i>
+                    </h1>
+                    <h2 class="neon-text mb-3">Criar Conta</h2>
+                    <p class="text-muted">Junte-se à revolução financeira</p>
+                </div>
+                
+                <!-- Formulário de Registro -->
+                <form method="POST" action="{{ url_for('register') }}">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label neon-text">Usuário</label>
+                            <div class="input-group">
+                                <span class="input-group-text neon-border">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                                <input type="text" class="form-control neon-input" name="username" 
+                                       placeholder="Escolha um usuário" required>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label neon-text">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text neon-border">
+                                    <i class="fas fa-envelope"></i>
+                                </span>
+                                <input type="email" class="form-control neon-input" name="email" 
+                                       placeholder="seu@email.com" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label neon-text">Senha</label>
+                            <div class="input-group">
+                                <span class="input-group-text neon-border">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                <input type="password" class="form-control neon-input" name="password" 
+                                       placeholder="Digite sua senha" required>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label neon-text">Confirmar Senha</label>
+                            <div class="input-group">
+                                <span class="input-group-text neon-border">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                                <input type="password" class="form-control neon-input" name="confirm_password" 
+                                       placeholder="Confirme sua senha" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="terms" required>
+                            <label class="form-check-label text-muted" for="terms">
+                                Concordo com os 
+                                <a href="#" class="neon-text text-decoration-none">Termos de Serviço</a>
+                                e 
+                                <a href="#" class="neon-text text-decoration-none">Política de Privacidade</a>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="neon-btn neon-btn-primary w-100 mb-3">
+                        <i class="fas fa-rocket me-2"></i>Criar Minha Conta
+                    </button>
+                    
+                    <div class="text-center">
+                        <a href="{{ url_for('login') }}" class="text-decoration-none neon-text">
+                            <i class="fas fa-sign-in-alt me-1"></i>Já tenho uma conta
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% extends "base_executivo.html" %}
+
+{% block title %}Registro - ContaSmart Pro{% endblock %}
+{% block page_title %}Criar Conta Executiva{% endblock %}
+{% block page_subtitle %}Cadastre-se para acessar o sistema de gestão financeira avançada{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="#">Registro</a></li>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container" style="max-width: 500px; margin: 0 auto; padding: var(--spacing-xl) 0;">
+    <div class="neon-card" style="padding: var(--spacing-xl);">
+        <div style="text-align: center; margin-bottom: var(--spacing-xl);">
+            <div class="logo-icon" style="width: 60px; height: 60px; margin: 0 auto var(--spacing-lg);">
+                <i class="fas fa-chart-network" style="font-size: 2rem;"></i>
+            </div>
+            <h2 style="margin-bottom: var(--spacing-sm);">Conta Executiva</h2>
+            <p style="color: var(--text-muted);">Crie sua conta para acessar o sistema completo</p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('register') }}">
+            <div class="form-group">
+                <label class="form-label">Nome Completo</label>
+                <input type="text" name="full_name" class="form-control" placeholder="Digite seu nome completo">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Nome de Usuário *</label>
+                <input type="text" name="username" class="form-control" placeholder="Escolha um nome de usuário" required>
+                <small style="color: var(--text-muted); font-size: 0.85rem;">Este será seu identificador no sistema</small>
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">Email *</label>
+                <input type="email" name="email" class="form-control" placeholder="seu@email.com" required>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Senha *</label>
+                    <input type="password" name="password" class="form-control" placeholder="Mínimo 6 caracteres" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Confirmar Senha *</label>
+                    <input type="password" name="confirm_password" class="form-control" placeholder="Digite a senha novamente" required>
+                </div>
+            </div>
+            
+            <div style="margin-bottom: var(--spacing-lg);">
+                <label style="display: flex; align-items: flex-start; gap: var(--spacing-sm); cursor: pointer;">
+                    <input type="checkbox" name="terms" required style="margin-top: 3px; accent-color: var(--primary-color);">
+                    <span style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.4;">
+                        Concordo com os <a href="#" style="color: var(--primary-color);">Termos de Uso</a> e 
+                        <a href="#" style="color: var(--primary-color);">Política de Privacidade</a> do sistema
+                    </span>
+                </label>
+            </div>
+            
+            <button type="submit" class="neon-btn primary" style="width: 100%; padding: 12px;">
+                <i class="fas fa-user-plus"></i>
+                Criar Conta Executiva
+            </button>
+        </form>
+        
+        <div style="text-align: center; margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid var(--border-color);">
+            <p style="color: var(--text-muted); margin-bottom: var(--spacing-md);">
+                Já tem uma conta executiva?
+            </p>
+            <a href="{{ url_for('login') }}" class="neon-btn outline" style="width: 100%;">
+                <i class="fas fa-sign-in-alt"></i>
+                Fazer Login
+            </a>
+        </div>
+        
+        <div style="margin-top: var(--spacing-lg); text-align: center;">
+            <a href="{{ url_for('index') }}" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem;">
+                <i class="fas fa-arrow-left"></i>
+                Voltar para página inicial
+            </a>
+        </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: var(--spacing-lg); color: var(--text-muted); font-size: 0.85rem;">
+        <p>
+            <i class="fas fa-rocket"></i> Comece agora sua gestão financeira • 
+            <i class="fas fa-chart-line"></i> Análises avançadas • 
+            <i class="fas fa-robot"></i> IA integrada
+        </p>
+    </div>
+</div>
+{% endblock %}

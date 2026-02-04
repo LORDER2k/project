@@ -1,0 +1,227 @@
+{
+  "meta": {
+    "empresa_id": "EMP001",
+    "empresa_nome": "EMPRESA ABC LTDA",
+    "data_referencia": "2024-01-31",
+    "data_criacao": "2024-01-15T10:30:00",
+    "tipo": "balanco_patrimonial",
+    "versao": "1.0.0",
+    "status": "preliminar"
+  },
+  "ativo": {
+    "circulante": {
+      "caixa_equivalentes": {
+        "descricao": "Caixa e Equivalentes de Caixa",
+        "valor": 75000.00,
+        "percentual_ativo": 15.0,
+        "detalhes": {
+          "caixa": 10000.00,
+          "bancos_conta_movimento": 50000.00,
+          "aplicacoes_liquidez": 15000.00
+        }
+      },
+      "contas_receber": {
+        "descricao": "Contas a Receber",
+        "valor": 125000.00,
+        "percentual_ativo": 25.0,
+        "detalhes": {
+          "clientes": 100000.00,
+          "duplicatas_receber": 25000.00
+        }
+      },
+      "estoques": {
+        "descricao": "Estoques",
+        "valor": 80000.00,
+        "percentual_ativo": 16.0,
+        "detalhes": {
+          "materia_prima": 30000.00,
+          "produtos_acabados": 50000.00
+        }
+      },
+      "outros_ativos_circulantes": {
+        "descricao": "Outros Ativos Circulantes",
+        "valor": 20000.00,
+        "percentual_ativo": 4.0,
+        "detalhes": {
+          "adiantamentos": 10000.00,
+          "impostos_recuperar": 10000.00
+        }
+      },
+      "total_ativo_circulante": {
+        "descricao": "Total do Ativo Circulante",
+        "valor": 300000.00,
+        "percentual_ativo": 60.0,
+        "calculado": true
+      }
+    },
+    "nao_circulante": {
+      "realizavel_longo_prazo": {
+        "descricao": "Realizável a Longo Prazo",
+        "valor": 50000.00,
+        "percentual_ativo": 10.0,
+        "detalhes": {
+          "contas_receber_lp": 50000.00
+        }
+      },
+      "imobilizado": {
+        "descricao": "Imobilizado",
+        "valor": 120000.00,
+        "percentual_ativo": 24.0,
+        "detalhes": {
+          "veiculos": 40000.00,
+          "maquinas_equipamentos": 80000.00
+        }
+      },
+      "intangivel": {
+        "descricao": "Intangível",
+        "valor": 30000.00,
+        "percentual_ativo": 6.0,
+        "detalhes": {
+          "softwares": 20000.00,
+          "marcas_patentes": 10000.00
+        }
+      },
+      "total_ativo_nao_circulante": {
+        "descricao": "Total do Ativo Não Circulante",
+        "valor": 200000.00,
+        "percentual_ativo": 40.0,
+        "calculado": true
+      }
+    },
+    "total_geral": {
+      "descricao": "Total do Ativo",
+      "valor": 500000.00,
+      "percentual_ativo": 100.0,
+      "calculado": true
+    }
+  },
+  "passivo": {
+    "circulante": {
+      "fornecedores": {
+        "descricao": "Fornecedores",
+        "valor": 80000.00,
+        "percentual_passivo": 16.0
+      },
+      "emprestimos_cp": {
+        "descricao": "Empréstimos e Financiamentos (CP)",
+        "valor": 50000.00,
+        "percentual_passivo": 10.0
+      },
+      "obrigacoes_trabalhistas": {
+        "descricao": "Obrigações Trabalhistas",
+        "valor": 30000.00,
+        "percentual_passivo": 6.0,
+        "detalhes": {
+          "salarios_pagar": 20000.00,
+          "ferias_provisionadas": 10000.00
+        }
+      },
+      "impostos_pagar": {
+        "descricao": "Impostos a Pagar",
+        "valor": 25000.00,
+        "percentual_passivo": 5.0
+      },
+      "total_passivo_circulante": {
+        "descricao": "Total do Passivo Circulante",
+        "valor": 185000.00,
+        "percentual_passivo": 37.0,
+        "calculado": true
+      }
+    },
+    "nao_circulante": {
+      "emprestimos_lp": {
+        "descricao": "Empréstimos e Financiamentos (LP)",
+        "valor": 100000.00,
+        "percentual_passivo": 20.0
+      },
+      "total_passivo_nao_circulante": {
+        "descricao": "Total do Passivo Não Circulante",
+        "valor": 100000.00,
+        "percentual_passivo": 20.0,
+        "calculado": true
+      }
+    },
+    "total_passivo": {
+      "descricao": "Total do Passivo",
+      "valor": 285000.00,
+      "percentual_passivo": 57.0,
+      "calculado": true
+    }
+  },
+  "patrimonio_liquido": {
+    "capital_social": {
+      "descricao": "Capital Social",
+      "valor": 150000.00,
+      "percentual_pl": 69.8
+    },
+    "reservas_lucros": {
+      "descricao": "Reservas de Lucros",
+      "valor": 50000.00,
+      "percentual_pl": 23.3,
+      "detalhes": {
+        "reserva_legal": 10000.00,
+        "lucros_acumulados": 40000.00
+      }
+    },
+    "lucro_exercicio": {
+      "descricao": "Lucro do Exercício",
+      "valor": 15000.00,
+      "percentual_pl": 7.0
+    },
+    "total_patrimonio_liquido": {
+      "descricao": "Total do Patrimônio Líquido",
+      "valor": 215000.00,
+      "percentual_pl": 100.0,
+      "calculado": true
+    }
+  },
+  "equacao_fundamental": {
+    "ativo_total": 500000.00,
+    "passivo_total": 285000.00,
+    "patrimonio_liquido_total": 215000.00,
+    "verificacao": "ATIVO = PASSIVO + PL",
+    "resultado": "OK",
+    "diferenca": 0.00
+  },
+  "indicadores": {
+    "liquidez": {
+      "liquidez_corrente": 1.62,
+      "liquidez_seca": 1.19,
+      "liquidez_geral": 1.25,
+      "liquidez_imediata": 0.41
+    },
+    "endividamento": {
+      "endividamento_total": 57.0,
+      "composicao_endividamento": 64.9,
+      "garantia_capital_terceiros": 1.32,
+      "imobilizacao_recursos": 0.24
+    },
+    "rentabilidade": {
+      "roe": 6.98,
+      "roa": 3.95,
+      "giro_ativo": 0.25,
+      "margem_liquida": 15.81
+    },
+    "analise_vertical": {
+      "ativo_circulante_percent": 60.0,
+      "ativo_nao_circulante_percent": 40.0,
+      "passivo_circulante_percent": 37.0,
+      "passivo_nao_circulante_percent": 20.0,
+      "patrimonio_liquido_percent": 43.0
+    }
+  },
+  "observacoes": [
+    "Índice de liquidez corrente dentro do aceitável (1.62)",
+    "Endividamento total de 57% - necessária atenção",
+    "Patrimônio líquido representa 43% do ativo total",
+    "Sugestão: reduzir contas a receber para melhorar liquidez"
+  ],
+  "assinaturas": {
+    "elaborado_por": "Maria Santos",
+    "cargo_elaborador": "Analista Contábil",
+    "revisado_por": "João Silva",
+    "cargo_revisor": "Gerente Financeiro",
+    "data_elaboracao": "2024-01-15",
+    "data_revisao": "2024-01-16"
+  }
+}

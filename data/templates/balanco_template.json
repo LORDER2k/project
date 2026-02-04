@@ -1,0 +1,20 @@
+{
+  "template_id": "TMP_BALANCO_001",
+  "nome": "Template Balanço Patrimonial",
+  "descricao": "Modelo para Balanço Patrimonial",
+  "estrutura": {
+    "ativo": [
+      "circulante",
+      "nao_circulante"
+    ],
+    "passivo": [
+      "circulante",
+      "nao_circulante"
+    ],
+    "patrimonio_liquido": [
+      "capital",
+      "reservas",
+      "lucros"
+    ]
+  }
+}

@@ -1,0 +1,774 @@
+{% extends "base.html" %}
+
+{% block title %}Fluxo de Caixa - Contabilidade Automata{% endblock %}
+
+{% block extra_css %}
+<style>
+    .cashflow-step {
+        background: white;
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow);
+        border-top: 4px solid var(--primary);
+    }
+    
+    .cashflow-positive {
+        border-top: 4px solid var(--success);
+    }
+    
+    .cashflow-negative {
+        border-top: 4px solid var(--danger);
+    }
+    
+    .cashflow-neutral {
+        border-top: 4px solid var(--warning);
+    }
+    
+    .cashflow-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0.5rem 0;
+    }
+    
+    .period-selector {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .period-btn {
+        flex: 1;
+        padding: 0.75rem;
+        text-align: center;
+        background: var(--light-gray);
+        border: none;
+        border-radius: var(--radius);
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .period-btn.active {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .period-btn:hover {
+        background: var(--primary);
+        color: white;
+    }
+    
+    .cashflow-chart-container {
+        background: white;
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        margin-bottom: 2rem;
+    }
+    
+    .cashflow-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .summary-card {
+        background: white;
+        border-radius: var(--radius);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        text-align: center;
+    }
+    
+    .summary-label {
+        font-size: 0.875rem;
+        color: var(--gray);
+        margin-bottom: 0.5rem;
+    }
+    
+    .summary-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+    
+    .summary-positive {
+        color: var(--success);
+    }
+    
+    .summary-negative {
+        color: var(--danger);
+    }
+    
+    .phase-container {
+        margin-bottom: 2rem;
+    }
+    
+    .phase-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+    }
+    
+    .phase-icon {
+        width: 40px;
+        height: 40px;
+        background: var(--primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        margin-right: 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="display-6 fw-bold text-gradient">
+            <i class="fas fa-money-bill-wave me-2"></i>
+            Fluxo de Caixa
+        </h1>
+        <p class="lead text-muted">Controle suas entradas e saídas de caixa com projeções detalhadas</p>
+    </div>
+</div>
+
+<!-- Period Selector -->
+<div class="period-selector">
+    <button class="period-btn active" onclick="setPeriod('mensal')">Mensal</button>
+    <button class="period-btn" onclick="setPeriod('trimestral')">Trimestral</button>
+    <button class="period-btn" onclick="setPeriod('anual')">Anual</button>
+</div>
+
+<div class="row">
+    <!-- Left Column - Form -->
+    <div class="col-lg-6" data-aos="fade-right">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0"><i class="fas fa-edit me-2"></i>Dados do Fluxo de Caixa</h4>
+            </div>
+            <div class="card-body">
+                <form id="fluxoForm">
+                    <!-- Saldo Inicial -->
+                    <div class="mb-4">
+                        <h5 class="form-section-title">
+                            <i class="fas fa-wallet me-2"></i>Saldo Inicial
+                        </h5>
+                        
+                        <div class="mb-3">
+                            <label for="saldo_inicial" class="form-label fw-bold">Saldo Inicial do Caixa (R$)</label>
+                            <div class="input-group">
+                                <span class="input-group-text">R$</span>
+                                <input type="number" class="form-control" id="saldo_inicial" 
+                                       step="0.01" placeholder="0,00" value="25000">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Fluxo Operacional -->
+                    <div class="mb-4">
+                        <h5 class="form-section-title">
+                            <i class="fas fa-cogs me-2"></i>Fluxo Operacional
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="recebimentos_clientes" class="form-label">Recebimentos de Clientes (R$)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="number" class="form-control" id="recebimentos_clientes" 
+                                           step="0.01" placeholder="0,00" value="200000">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="pagamentos_fornecedores" class="form-label">Pagamentos a Fornecedores (R$)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="number" class="form-control" id="pagamentos_fornecedores" 
+                                           step="0.01" placeholder="0,00" value="90000">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="pagamentos_despesas" class="form-label">Pagamentos de Despesas (R$)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="number" class="form-control" id="pagamentos_despesas" 
+                                           step="0.01" placeholder="0,00" value="50000">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="pagamentos_impostos" class="form-label">Pagamentos de Impostos (R$)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="number" class="form-control" id="pagamentos_impostos" 
+                                           step="0.01" placeholder="0,00" value="25000">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Fluxo de Investimento -->
+                    <div class="mb-4">
+                        <h5 class="form-section-title">
+                            <i class="fas fa-chart-line me-2"></i>Fluxo de Investimento
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="compra_ativos" class="form-label">Compra de Ativos (R$)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="number" class="form-control" id="compra_ativos" 
+                                           step="0.01" placeholder="0,00" value="30000">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="venda_ativos" class="form-label">Venda de Ativos (R$)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="number" class="form-control" id="venda_ativos" 
+                                           step="0.01" placeholder="0,00" value="5000">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Fluxo de Financiamento -->
+                    <div class="mb-4">
+                        <h5 class="form-section-title">
+                            <i class="fas fa-hand-holding-usd me-2"></i>Fluxo de Financiamento
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="emprestimos" class="form-label">Empréstimos Obtidos (R$)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="number" class="form-control" id="emprestimos" 
+                                           step="0.01" placeholder="0,00" value="20000">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="pagamentos_emprestimos" class="form-label">Pagamentos de Empréstimos (R$)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="number" class="form-control" id="pagamentos_emprestimos" 
+                                           step="0.01" placeholder="0,00" value="15000">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="aportes_capital" class="form-label">Aportes de Capital (R$)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="number" class="form-control" id="aportes_capital" 
+                                           step="0.01" placeholder="0,00" value="10000">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="distribuicao_dividendos" class="form-label">Distribuição de Dividendos (R$)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">R$</span>
+                                    <input type="number" class="form-control" id="distribuicao_dividendos" 
+                                           step="0.01" placeholder="0,00" value="5000">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2 d-md-flex">
+                        <button type="button" class="btn btn-primary btn-lg flex-fill" onclick="calcularFluxoCaixa()" id="btnCalcular">
+                            <i class="fas fa-calculator me-2"></i>Calcular Fluxo
+                        </button>
+                        <button type="button" class="btn btn-outline-primary btn-lg flex-fill" onclick="carregarExemplo()">
+                            <i class="fas fa-file-alt me-2"></i>Exemplo
+                        </button>
+                        <button type="reset" class="btn btn-outline-secondary btn-lg flex-fill">
+                            <i class="fas fa-redo me-2"></i>Limpar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column - Results -->
+    <div class="col-lg-6" data-aos="fade-left">
+        <!-- Loading State -->
+        <div id="loadingState" class="card text-center py-5" style="display: none;">
+            <div class="card-body">
+                <div class="spinner-border text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+                    <span class="visually-hidden">Calculando...</span>
+                </div>
+                <h4>Calculando Fluxo de Caixa...</h4>
+                <p class="text-muted">Analisando entradas e saídas</p>
+            </div>
+        </div>
+        
+        <!-- Results Container -->
+        <div id="resultsContainer" style="display: none;">
+            <!-- Summary Cards -->
+            <div class="cashflow-summary">
+                <div class="summary-card">
+                    <div class="summary-label">Saldo Inicial</div>
+                    <div class="summary-value" id="saldoInicialRes">R$ 0,00</div>
+                </div>
+                
+                <div class="summary-card">
+                    <div class="summary-label">Fluxo Operacional</div>
+                    <div class="summary-value" id="fluxoOperacionalRes">R$ 0,00</div>
+                </div>
+                
+                <div class="summary-card">
+                    <div class="summary-label">Fluxo Total</div>
+                    <div class="summary-value" id="fluxoTotalRes">R$ 0,00</div>
+                </div>
+                
+                <div class="summary-card">
+                    <div class="summary-label">Saldo Final</div>
+                    <div class="summary-value summary-positive" id="saldoFinalRes">R$ 0,00</div>
+                </div>
+            </div>
+            
+            <!-- Detailed Phases -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-sitemap me-2"></i>Detalhamento por Fase</h4>
+                </div>
+                <div class="card-body">
+                    <!-- Operacional Phase -->
+                    <div class="phase-container">
+                        <div class="phase-title">
+                            <div class="phase-icon">
+                                <i class="fas fa-cogs"></i>
+                            </div>
+                            <span>Fluxo Operacional</span>
+                        </div>
+                        
+                        <div class="cashflow-step cashflow-positive" id="stepOperacional">
+                            <!-- Content will be inserted here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Investimento Phase -->
+                    <div class="phase-container">
+                        <div class="phase-title">
+                            <div class="phase-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <span>Fluxo de Investimento</span>
+                        </div>
+                        
+                        <div class="cashflow-step" id="stepInvestimento">
+                            <!-- Content will be inserted here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Financiamento Phase -->
+                    <div class="phase-container">
+                        <div class="phase-title">
+                            <div class="phase-icon">
+                                <i class="fas fa-hand-holding-usd"></i>
+                            </div>
+                            <span>Fluxo de Financiamento</span>
+                        </div>
+                        
+                        <div class="cashflow-step" id="stepFinanciamento">
+                            <!-- Content will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analysis -->
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-chart-line me-2"></i>Análise do Fluxo de Caixa</h4>
+                </div>
+                <div class="card-body">
+                    <div id="analysisContent">
+                        <!-- Analysis will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Empty State -->
+        <div id="emptyState" class="card text-center py-5">
+            <div class="card-body">
+                <div class="feature-icon mb-3 mx-auto">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <h4>Fluxo de Caixa</h4>
+                <p class="text-muted mb-4">Preencha os dados à esquerda e clique em "Calcular Fluxo" para analisar sua situação de caixa</p>
+                
+                <div class="calculation-step">
+                    <h6 class="mb-2">Como funciona o cálculo:</h6>
+                    <p class="mb-1"><strong>Fluxo Total = Operacional + Investimento + Financiamento</strong></p>
+                    <p class="mb-0"><strong>Saldo Final = Saldo Inicial + Fluxo Total</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Current period
+    let currentPeriod = 'mensal';
+    
+    // DOM Elements
+    const loadingState = document.getElementById('loadingState');
+    const resultsContainer = document.getElementById('resultsContainer');
+    const emptyState = document.getElementById('emptyState');
+    const btnCalcular = document.getElementById('btnCalcular');
+    
+    // Set period
+    function setPeriod(period) {
+        currentPeriod = period;
+        
+        // Update active button
+        document.querySelectorAll('.period-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        event.target.classList.add('active');
+        
+        // If results are shown, recalculate
+        if (resultsContainer.style.display === 'block') {
+            calcularFluxoCaixa();
+        }
+    }
+    
+    // Calculate Cash Flow
+    async function calcularFluxoCaixa() {
+        // Collect data
+        const dados = {
+            saldo_inicial: document.getElementById('saldo_inicial').value || 0,
+            recebimentos_clientes: document.getElementById('recebimentos_clientes').value || 0,
+            pagamentos_fornecedores: document.getElementById('pagamentos_fornecedores').value || 0,
+            pagamentos_despesas: document.getElementById('pagamentos_despesas').value || 0,
+            pagamentos_impostos: document.getElementById('pagamentos_impostos').value || 0,
+            compra_ativos: document.getElementById('compra_ativos').value || 0,
+            venda_ativos: document.getElementById('venda_ativos').value || 0,
+            emprestimos: document.getElementById('emprestimos').value || 0,
+            pagamentos_emprestimos: document.getElementById('pagamentos_emprestimos').value || 0,
+            aportes_capital: document.getElementById('aportes_capital').value || 0,
+            distribuicao_dividendos: document.getElementById('distribuicao_dividendos').value || 0
+        };
+        
+        // Apply period multiplier
+        const multiplier = getPeriodMultiplier();
+        Object.keys(dados).forEach(key => {
+            if (typeof dados[key] === 'string') {
+                dados[key] = parseFloat(dados[key]) || 0;
+            }
+            if (key !== 'saldo_inicial') {
+                dados[key] = dados[key] * multiplier;
+            }
+        });
+        
+        // Show loading
+        loadingState.style.display = 'block';
+        resultsContainer.style.display = 'none';
+        emptyState.style.display = 'none';
+        btnCalcular.disabled = true;
+        btnCalcular.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Calculando...';
+        
+        try {
+            // Call API
+            const response = await fetch('/api/calcular/fluxo-caixa', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(dados)
+            });
+            
+            const resultado = await response.json();
+            
+            if (resultado.sucesso) {
+                // Show results
+                exibirResultados(resultado);
+                loadingState.style.display = 'none';
+                resultsContainer.style.display = 'block';
+                
+                // Scroll to results
+                resultsContainer.scrollIntoView({ behavior: 'smooth' });
+                
+                showToast('Fluxo de caixa calculado com sucesso!', 'success');
+            } else {
+                // Show error
+                loadingState.style.display = 'none';
+                emptyState.style.display = 'block';
+                showToast('Erro: ' + resultado.erro, 'danger');
+            }
+        } catch (error) {
+            // Fallback to local calculation
+            calcularLocalmente(dados);
+            loadingState.style.display = 'none';
+            resultsContainer.style.display = 'block';
+            showToast('Calculado localmente! API offline', 'info');
+        } finally {
+            // Reset button
+            btnCalcular.disabled = false;
+            btnCalcular.innerHTML = '<i class="fas fa-calculator me-2"></i>Calcular Fluxo';
+        }
+    }
+    
+    // Get period multiplier
+    function getPeriodMultiplier() {
+        switch(currentPeriod) {
+            case 'mensal': return 1;
+            case 'trimestral': return 3;
+            case 'anual': return 12;
+            default: return 1;
+        }
+    }
+    
+    // Local calculation (fallback)
+    function calcularLocalmente(dados) {
+        // Calculations
+        const fluxoOperacional = dados.recebimentos_clientes - 
+                               dados.pagamentos_fornecedores - 
+                               dados.pagamentos_despesas - 
+                               dados.pagamentos_impostos;
+        
+        const fluxoInvestimento = dados.venda_ativos - dados.compra_ativos;
+        const fluxoFinanciamento = dados.emprestimos + dados.aportes_capital - 
+                                 dados.pagamentos_emprestimos - dados.distribuicao_dividendos;
+        
+        const fluxoTotal = fluxoOperacional + fluxoInvestimento + fluxoFinanciamento;
+        const saldoFinal = dados.saldo_inicial + fluxoTotal;
+        
+        // Create result object
+        const resultado = {
+            sucesso: true,
+            calculos: {
+                fluxo_operacional: fluxoOperacional,
+                fluxo_investimento: fluxoInvestimento,
+                fluxo_financiamento: fluxoFinanciamento,
+                fluxo_total: fluxoTotal,
+                saldo_inicial: dados.saldo_inicial,
+                saldo_final: saldoFinal
+            },
+            formatado: {
+                fluxo_operacional: formatCurrency(fluxoOperacional),
+                fluxo_investimento: formatCurrency(fluxoInvestimento),
+                fluxo_financiamento: formatCurrency(fluxoFinanciamento),
+                fluxo_total: formatCurrency(fluxoTotal),
+                saldo_inicial: formatCurrency(dados.saldo_inicial),
+                saldo_final: formatCurrency(saldoFinal)
+            },
+            analise: {
+                situacao: fluxoOperacional > 0 ? 'SAUDÁVEL' : 'PREOCUPANTE',
+                recomendacoes: [],
+                alertas: fluxoOperacional < 0 ? ['Operação não gera caixa - depende de financiamento'] : []
+            }
+        };
+        
+        exibirResultados(resultado);
+    }
+    
+    // Display results
+    function exibirResultados(resultado) {
+        // Update summary
+        document.getElementById('saldoInicialRes').textContent = resultado.formatado.saldo_inicial;
+        document.getElementById('fluxoOperacionalRes').textContent = resultado.formatado.fluxo_operacional;
+        document.getElementById('fluxoTotalRes').textContent = resultado.formatado.fluxo_total;
+        document.getElementById('saldoFinalRes').textContent = resultado.formatado.saldo_final;
+        
+        // Update colors
+        const fluxoOperacionalEl = document.getElementById('fluxoOperacionalRes');
+        const fluxoTotalEl = document.getElementById('fluxoTotalRes');
+        const saldoFinalEl = document.getElementById('saldoFinalRes');
+        
+        fluxoOperacionalEl.className = resultado.calculos.fluxo_operacional >= 0 ? 
+            'summary-value summary-positive' : 'summary-value summary-negative';
+        
+        fluxoTotalEl.className = resultado.calculos.fluxo_total >= 0 ? 
+            'summary-value summary-positive' : 'summary-value summary-negative';
+        
+        saldoFinalEl.className = resultado.calculos.saldo_final >= 0 ? 
+            'summary-value summary-positive' : 'summary-value summary-negative';
+        
+        // Update detailed phases
+        updatePhaseDetails(resultado);
+        
+        // Update analysis
+        updateAnalysis(resultado);
+    }
+    
+    // Update phase details
+    function updatePhaseDetails(resultado) {
+        // Operacional Phase
+        const operacionalStep = document.getElementById('stepOperacional');
+        let operacionalHTML = `
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h6 class="mb-1">Atividades Operacionais</h6>
+                    <small class="text-muted">Recebimentos menos pagamentos operacionais</small>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="cashflow-value ${resultado.calculos.fluxo_operacional >= 0 ? 'positive' : 'negative'}">
+                        ${resultado.formatado.fluxo_operacional}
+                    </div>
+                </div>
+            </div>
+        `;
+        operacionalStep.className = resultado.calculos.fluxo_operacional >= 0 ? 
+            'cashflow-step cashflow-positive' : 'cashflow-step cashflow-negative';
+        operacionalStep.innerHTML = operacionalHTML;
+        
+        // Investimento Phase
+        const investimentoStep = document.getElementById('stepInvestimento');
+        let investimentoHTML = `
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h6 class="mb-1">Atividades de Investimento</h6>
+                    <small class="text-muted">Compra e venda de ativos permanentes</small>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="cashflow-value ${resultado.calculos.fluxo_investimento >= 0 ? 'positive' : 'negative'}">
+                        ${resultado.formatado.fluxo_investimento}
+                    </div>
+                </div>
+            </div>
+        `;
+        investimentoStep.className = resultado.calculos.fluxo_investimento >= 0 ? 
+            'cashflow-step cashflow-positive' : 'cashflow-step cashflow-negative';
+        investimentoStep.innerHTML = investimentoHTML;
+        
+        // Financiamento Phase
+        const financiamentoStep = document.getElementById('stepFinanciamento');
+        let financiamentoHTML = `
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h6 class="mb-1">Atividades de Financiamento</h6>
+                    <small class="text-muted">Empréstimos, aportes e distribuições</small>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="cashflow-value ${resultado.calculos.fluxo_financiamento >= 0 ? 'positive' : 'negative'}">
+                        ${resultado.formatado.fluxo_financiamento}
+                    </div>
+                </div>
+            </div>
+        `;
+        financiamentoStep.className = resultado.calculos.fluxo_financiamento >= 0 ? 
+            'cashflow-step cashflow-positive' : 'cashflow-step cashflow-negative';
+        financiamentoStep.innerHTML = financiamentoHTML;
+    }
+    
+    // Update analysis
+    function updateAnalysis(resultado) {
+        let analysisHTML = '';
+        
+        // Situation
+        const situacaoClass = resultado.analise.situacao === 'SAUDÁVEL' ? 'success' : 'warning';
+        
+        analysisHTML += `
+            <div class="alert alert-${situacaoClass}">
+                <h5 class="alert-heading">
+                    <i class="fas fa-${resultado.analise.situacao === 'SAUDÁVEL' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+                    Situação: ${resultado.analise.situacao}
+                </h5>
+                <p class="mb-0">
+                    ${resultado.analise.situacao === 'SAUDÁVEL' ? 
+                        'Sua operação gera caixa positivamente.' : 
+                        'Sua operação não está gerando caixa suficiente.'}
+                </p>
+            </div>
+        `;
+        
+        // Alerts
+        if (resultado.analise.alertas && resultado.analise.alertas.length > 0) {
+            analysisHTML += `
+                <div class="alert alert-danger">
+                    <h5 class="alert-heading">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Alertas Importantes
+                    </h5>
+                    <ul class="mb-0">
+                        ${resultado.analise.alertas.map(alerta => `<li>${alerta}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+        
+        // Recommendations
+        let recommendations = [];
+        
+        if (resultado.calculos.fluxo_operacional < 0) {
+            recommendations.push('Aumente os recebimentos ou reduza os pagamentos operacionais');
+        }
+        
+        if (resultado.calculos.saldo_final < 0) {
+            recommendations.push('Considere obter financiamento para cobrir o déficit de caixa');
+        }
+        
+        if (resultado.calculos.fluxo_total > 0) {
+            recommendations.push('Saldo de caixa aumentou - considere investir o excedente');
+        }
+        
+        if (recommendations.length > 0) {
+            analysisHTML += `
+                <div class="alert alert-info">
+                    <h5 class="alert-heading">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Recomendações
+                    </h5>
+                    <ul class="mb-0">
+                        ${recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }
+        
+        document.getElementById('analysisContent').innerHTML = analysisHTML;
+    }
+    
+    // Load example
+    async function carregarExemplo() {
+        try {
+            const response = await fetch('/api/exemplo/fluxo-caixa');
+            const resultado = await response.json();
+            
+            if (resultado.sucesso) {
+                const exemplo = resultado.exemplo;
+                for (const [key, value] of Object.entries(exemplo)) {
+                    const element = document.getElementById(key);
+                    if (element) element.value = value;
+                }
+                showToast('Exemplo carregado com sucesso!', 'success');
+            }
+        } catch (error) {
+            // Already have default values
+            showToast('Valores padrão carregados!', 'info');
+        }
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add input validation
+        const numberInputs = document.querySelectorAll('input[type="number"]');
+        numberInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                if (this.value < 0) this.value = 0;
+            });
+        });
+    });
+</script>
+{% endblock %}

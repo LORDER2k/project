@@ -1,0 +1,11 @@
+{
+  "empresa": {
+    "id": "EMP002",
+    "cnpj": "98.765.432/0001-10",
+    "razao_social": "EMPRESA XYZ S/A",
+    "nome_fantasia": "XYZ COMÉRCIO",
+    "data_fundacao": "2015-08-20",
+    "data_cadastro": "2026-02-03",
+    "status": "ativa"
+  }
+}

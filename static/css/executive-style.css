@@ -1,0 +1,224 @@
+/* static/css/executive-style.css */
+:root {
+    --primary-color: #0066ff;
+    --primary-light: #3399ff;
+    --primary-dark: #0044cc;
+    --accent-color: #00ff88;
+    --danger-color: #ff3366;
+    --warning-color: #ff9900;
+    --success-color: #00cc88;
+    --info-color: #00ccff;
+    
+    --bg-primary: #0a0a14;
+    --bg-secondary: #1a1a24;
+    --bg-tertiary: #2a2a34;
+    --bg-card: #151520;
+    
+    --text-primary: #ffffff;
+    --text-secondary: #a0a0c0;
+    --text-muted: #707090;
+    
+    --border-color: #2a2a3a;
+    --border-light: #3a3a4a;
+    
+    --font-main: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    
+    --border-radius-sm: 4px;
+    --border-radius-md: 8px;
+    --border-radius-lg: 12px;
+    --border-radius-xl: 16px;
+    --border-radius-round: 50%;
+    
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    --spacing-xxl: 48px;
+    
+    --transition-fast: 0.2s ease;
+    --transition-medium: 0.3s ease;
+    --transition-slow: 0.5s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-main);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    overflow-x: hidden;
+}
+
+/* Layout básico */
+.executive-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.executive-sidebar {
+    width: 280px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-color);
+    transition: width var(--transition-medium);
+}
+
+.executive-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.content-wrapper {
+    flex: 1;
+    padding: var(--spacing-lg);
+    overflow-y: auto;
+}
+
+/* Classes básicas para o dashboard */
+.neon-stats-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    transition: all var(--transition-fast);
+}
+
+.neon-stats-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.neon-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.neon-table th {
+    text-align: left;
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.neon-table td {
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--border-light);
+}
+
+.neon-table tr:hover {
+    background: var(--bg-tertiary);
+}
+
+.neon-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 8px 16px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius-md);
+    font-family: var(--font-main);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.neon-btn:hover {
+    background: var(--primary-light);
+    transform: translateY(-1px);
+}
+
+.neon-btn.sm {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+}
+
+.neon-btn.outline {
+    background: transparent;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+.neon-btn.outline:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.neon-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+}
+
+.neon-progress {
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.neon-progress-bar {
+    height: 100%;
+    background: var(--primary-color);
+    transition: width var(--transition-medium);
+}
+
+.neon-progress-bar.success {
+    background: var(--success-color);
+}
+
+.neon-progress-bar.warning {
+    background: var(--warning-color);
+}
+
+.neon-progress-bar.danger {
+    background: var(--danger-color);
+}
+
+.neon-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-family: var(--font-mono);
+}
+
+.neon-badge.primary {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.amount.income {
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.amount.expense {
+    color: var(--danger-color);
+    font-weight: 600;
+}
+
+.positive {
+    color: var(--success-color);
+}
+
+.negative {
+    color: var(--danger-color);
+}
+
+.neutral {
+    color: var(--text-muted);
+}

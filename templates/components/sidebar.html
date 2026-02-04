@@ -1,0 +1,70 @@
+<!-- Logo -->
+<div class="sidebar-logo">
+    <div class="logo-icon">
+        <i class="ri-calculator-line"></i>
+    </div>
+    <div class="logo-text">
+        <span class="logo-primary">Contabilidade</span>
+        <span class="logo-secondary">Automata</span>
+    </div>
+</div>
+
+<!-- Navegação -->
+<nav class="sidebar-nav">
+    <!-- Dashboard -->
+    <a href="/dashboard" class="nav-link {% if request.path == '/dashboard' %}active{% endif %}">
+        <i class="ri-dashboard-line"></i>
+        <span>Dashboard</span>
+    </a>
+    
+    <!-- DRE -->
+    <a href="/dre" class="nav-link {% if request.path == '/dre' %}active{% endif %}">
+        <i class="ri-calculator-line"></i>
+        <span>DRE</span>
+        <span class="nav-badge">New</span>
+    </a>
+    
+    <!-- Balanço -->
+    <a href="/balanco" class="nav-link {% if request.path == '/balanco' %}active{% endif %}">
+        <i class="ri-scales-line"></i>
+        <span>Balanço</span>
+    </a>
+    
+    <!-- Empresas -->
+    <a href="/empresas" class="nav-link {% if request.path == '/empresas' %}active{% endif %}">
+        <i class="ri-building-line"></i>
+        <span>Empresas</span>
+    </a>
+    
+    <!-- Relatórios -->
+    <a href="/relatorios" class="nav-link {% if request.path == '/relatorios' %}active{% endif %}">
+        <i class="ri-file-chart-line"></i>
+        <span>Relatórios</span>
+    </a>
+    
+    <!-- Configurações -->
+    <div class="nav-divider"></div>
+    
+    <a href="/configuracoes" class="nav-link {% if request.path == '/configuracoes' %}active{% endif %}">
+        <i class="ri-settings-3-line"></i>
+        <span>Configurações</span>
+    </a>
+    
+    <a href="/ajuda" class="nav-link">
+        <i class="ri-question-line"></i>
+        <span>Ajuda</span>
+    </a>
+</nav>
+
+<!-- Status do Sistema -->
+<div class="sidebar-footer">
+    <div class="system-status">
+        <div class="status-indicator">
+            <span class="status-dot online"></span>
+            Sistema Online
+        </div>
+        <div class="status-info">
+            <small>v1.0.0</small>
+        </div>
+    </div>
+</div>

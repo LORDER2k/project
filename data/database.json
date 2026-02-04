@@ -1,0 +1,49 @@
+{
+  "meta": {
+    "versao_banco": "1.0.0",
+    "data_criacao": "2024-01-15T10:30:00",
+    "ultima_atualizacao": "2024-01-15T10:30:00",
+    "total_registros": 0,
+    "empresas_cadastradas": 0
+  },
+  "configuracoes": {
+    "moeda_padrao": "BRL",
+    "idioma": "pt-BR",
+    "formato_data": "DD/MM/YYYY",
+    "casas_decimais": 2,
+    "backup_automatico": true,
+    "intervalo_backup_horas": 24
+  },
+  "empresas": [
+    {
+      "id": "EMP001",
+      "cnpj": "00.000.000/0001-00",
+      "razao_social": "EMPRESA EXEMPLO LTDA",
+      "nome_fantasia": "EXEMPLO CONTÁBIL",
+      "data_cadastro": "2024-01-15",
+      "ativo": true,
+      "config": {
+        "setor": "Serviços",
+        "regime_tributario": "Lucro Real",
+        "contador_responsavel": "João Silva",
+        "email_contato": "contato@empresa.com"
+      }
+    }
+  ],
+  "usuarios": [
+    {
+      "id": "USR001",
+      "nome": "Administrador",
+      "email": "admin@contabilidade.com",
+      "perfil": "admin",
+      "data_cadastro": "2024-01-15",
+      "ultimo_acesso": "2024-01-15T10:30:00"
+    }
+  ],
+  "registros_dre": [],
+  "registros_balanco": [],
+  "registros_fluxo_caixa": [],
+  "analises_salvas": [],
+  "relatorios_gerados": [],
+  "log_alteracoes": []
+}

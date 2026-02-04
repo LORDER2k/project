@@ -1,0 +1,414 @@
+{% extends "base.html" %}
+
+{% block title %}Insights Financeiros - ContaSmart Pro{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/interactive.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-2">
+                        <i class="fas fa-brain text-warning me-2"></i>
+                        Insights Financeiros Inteligentes
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Análises personalizadas e recomendações baseadas em seus dados
+                    </p>
+                </div>
+                <div>
+                    <button class="btn btn-warning" onclick="refreshInsights()">
+                        <i class="fas fa-sync-alt me-2"></i>Atualizar Insights
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insights Principais -->
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <!-- Economia -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-piggy-bank me-2"></i>
+                        Potencial de Economia
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-4 text-center">
+                            <div class="economy-value display-4 text-warning mb-2">
+                                R$ {{ "%.2f"|format(insights.economia.valor) }}
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div class="progress-bar bg-warning" 
+                                     style="width: {{ insights.economia.percentual }}%"></div>
+                            </div>
+                            <small class="text-muted">{{ insights.economia.percentual }}% de redução possível</small>
+                        </div>
+                        <div class="col-md-8">
+                            <h6 class="mb-3">{{ insights.economia.sugestao }}</h6>
+                            <div class="suggestions">
+                                <h6 class="mb-2">💡 Sugestões práticas:</h6>
+                                <ul class="list-unstyled">
+                                    <li class="mb-2">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        Reduza gastos com alimentação fora em 15%
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        Negocie serviços (internet, telefone, streaming)
+                                    </li>
+                                    <li class="mb-2">
+                                        <i class="fas fa-check-circle text-success me-2"></i>
+                                        Planeje compras com antecedência
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sugestão de Investimentos -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Sugestão de Investimentos
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="investment-card">
+                        <div class="investment-header mb-4">
+                            <h4 class="mb-2">{{ insights.investimento.tipo }}</h4>
+                            <div class="investment-badges">
+                                <span class="badge bg-success me-2">R$ {{ insights.investimento.valor_minimo }}</span>
+                                <span class="badge bg-{% if insights.investimento.risco == 'Baixo' %}success{% elif insights.investimento.risco == 'Moderado' %}warning{% else %}danger{% endif %}">
+                                    Risco {{ insights.investimento.risco }}
+                                </span>
+                                <span class="badge bg-info">
+                                    Retorno: {{ insights.investimento.retorno_esperado }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <p class="mb-4">{{ insights.investimento.sugestao }}</p>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6 class="mb-3">📋 Plano de Ação:</h6>
+                                <ol class="list-unstyled">
+                                    <li class="mb-2">
+                                        <strong>1.</strong> Separe R$ {{ insights.investimento.valor_minimo }} inicial
+                                    </li>
+                                    <li class="mb-2">
+                                        <strong>2.</strong> Configure aportes mensais automáticos
+                                    </li>
+                                    <li class="mb-2">
+                                        <strong>3.</strong> Diversifique entre 3-5 opções
+                                    </li>
+                                </ol>
+                            </div>
+                            <div class="col-md-6">
+                                <h6 class="mb-3">🏦 Plataformas Sugeridas:</h6>
+                                <div class="platform-list">
+                                    <span class="badge bg-light text-dark me-2 mb-2">XP Investimentos</span>
+                                    <span class="badge bg-light text-dark me-2 mb-2">Clear</span>
+                                    <span class="badge bg-light text-dark me-2 mb-2">Rico</span>
+                                    <span class="badge bg-light text-dark mb-2">BTG Pactual</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Alertas -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Alertas Importantes
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if insights.alerta %}
+                    <div class="alert-list">
+                        {% for alerta in insights.alerta %}
+                        <div class="alert-item border-bottom p-3">
+                            <div class="d-flex align-items-center">
+                                <div class="alert-icon me-3">
+                                    <i class="fas fa-exclamation-circle text-danger"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <small>{{ alerta }}</small>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center p-4">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <p class="mb-0">Nenhum alerta crítico no momento!</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Metas -->
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bullseye me-2"></i>
+                        Análise de Metas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if insights.meta %}
+                    <div class="goals-insights">
+                        {% for meta_info in insights.meta %}
+                        <div class="goal-item mb-3">
+                            <h6>{{ meta_info.titulo }}</h6>
+                            <div class="progress mb-2" style="height: 8px;">
+                                <div class="progress-bar" style="width: {{ meta_info.progresso }}%"></div>
+                            </div>
+                            <div class="d-flex justify-content-between small">
+                                <span>R$ {{ "%.2f"|format(meta_info.atual) }}</span>
+                                <span>R$ {{ "%.2f"|format(meta_info.alvo) }}</span>
+                                <span>{{ meta_info.progresso|round(1) }}%</span>
+                            </div>
+                            <small class="text-muted">{{ meta_info.dias_restantes }} dias restantes</small>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-3">
+                        <i class="fas fa-bullseye fa-2x text-muted mb-3"></i>
+                        <p class="text-muted mb-0">Nenhuma meta em análise</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Orçamento -->
+            <div class="card shadow">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-invoice-dollar me-2"></i>
+                        Análise de Orçamento
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if insights.orcamento %}
+                    <div class="budget-analysis">
+                        <div class="budget-item mb-3">
+                            <h6>📊 Adequação Orçamentária</h6>
+                            <div class="budget-status">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small>Despesas Fixas</small>
+                                    <small>{{ insights.orcamento.fixas_percentual }}%</small>
+                                </div>
+                                <div class="progress mb-3" style="height: 6px;">
+                                    <div class="progress-bar bg-success" 
+                                         style="width: {{ insights.orcamento.fixas_percentual }}%"></div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small>Despesas Variáveis</small>
+                                    <small>{{ insights.orcamento.variaveis_percentual }}%</small>
+                                </div>
+                                <div class="progress mb-3" style="height: 6px;">
+                                    <div class="progress-bar bg-warning" 
+                                         style="width: {{ insights.orcamento.variaveis_percentual }}%"></div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small>Investimentos</small>
+                                    <small>{{ insights.orcamento.investimentos_percentual }}%</small>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-primary" 
+                                         style="width: {{ insights.orcamento.investimentos_percentual }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="text-center mt-3">
+                        <button class="btn btn-sm btn-outline-info" onclick="showBudgetPlanner()">
+                            <i class="fas fa-calculator me-2"></i>Planejador de Orçamento
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recomendações Personalizadas -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user-graduate text-primary me-2"></i>
+                        Recomendações Personalizadas
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="recommendation-card">
+                                <div class="rec-icon bg-primary">
+                                    <i class="fas fa-book"></i>
+                                </div>
+                                <h6>Educação Financeira</h6>
+                                <small>Curso básico de investimentos</small>
+                                <button class="btn btn-sm btn-outline-primary mt-2 w-100">
+                                    Acessar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <div class="recommendation-card">
+                                <div class="rec-icon bg-success">
+                                    <i class="fas fa-tools"></i>
+                                </div>
+                                <h6>Ferramentas Úteis</h6>
+                                <small>Calculadora de juros compostos</small>
+                                <button class="btn btn-sm btn-outline-success mt-2 w-100">
+                                    Usar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <div class="recommendation-card">
+                                <div class="rec-icon bg-warning">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                                <h6>Análise Comparativa</h6>
+                                <small>Compare com média da sua faixa</small>
+                                <button class="btn btn-sm btn-outline-warning mt-2 w-100">
+                                    Comparar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3 mb-3">
+                            <div class="recommendation-card">
+                                <div class="rec-icon bg-info">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <h6>Planejamento</h6>
+                                <small>Planejador anual gratuito</small>
+                                <button class="btn btn-sm btn-outline-info mt-2 w-100">
+                                    Baixar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Perguntas Frequentes -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-question-circle text-primary me-2"></i>
+                        Perguntas Frequentes sobre Insights
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="accordion" id="insightsFAQ">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                    Como os insights são gerados?
+                                </button>
+                            </h2>
+                            <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#insightsFAQ">
+                                <div class="accordion-body">
+                                    Nossos insights são gerados através de análise dos seus dados históricos, comparativos com padrões da sua faixa etária e região, e algoritmos de machine learning que identificam padrões e oportunidades de melhoria.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                    Com que frequência os insights são atualizados?
+                                </button>
+                            </h2>
+                            <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#insightsFAQ">
+                                <div class="accordion-body">
+                                    Os insights são atualizados em tempo real sempre que você adiciona novas transações. Análises mais profundas são recalculadas diariamente para garantir que você sempre tenha as informações mais atualizadas.
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                    Meus dados são seguros?
+                                </button>
+                            </h2>
+                            <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#insightsFAQ">
+                                <div class="accordion-body">
+                                    Sim! Todos os seus dados são armazenados localmente no seu dispositivo. Nenhuma informação financeira sensível é enviada para nossos servidores. Os cálculos são feitos localmente para garantir sua privacidade.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Planejador de Orçamento -->
+<div class="modal fade" id="budgetPlannerModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-calculator me-2"></i>
+                    Planejador de Orçamento
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="budget-planner-content">
+                    <!-- Conteúdo será carregado via JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/insights.js') }}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initInsights();
+    setupInsightsInteractions();
+});
+</script>
+{% endblock %}
