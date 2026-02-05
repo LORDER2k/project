@@ -1,18 +1,7 @@
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
+echo "__pycache__/
+*.pyc
+.env
 venv/
 env/
-.venv
-.env
-instance/
-*.db
-.vscode/
-.idea/
-*.swp
-*.swo
-.DS_Store
-Thumbs.db
 *.log
+.DS_Store" > .gitignore
