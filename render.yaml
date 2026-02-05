@@ -1,18 +1,9 @@
 services:
   - type: web
-    name: finance-manager
+    name: meu-dashboard
     env: python
-    region: ohio  # ou são paulo se disponível
-    plan: free  # ou starter, professional
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn wsgi:app
+    startCommand: gunicorn app:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
-      - key: SECRET_KEY
-        generateValue: true
-      - key: DATABASE_URL
-        fromDatabase:
-          name: finance-db
-          property: connectionString
-    autoDeploy: true
