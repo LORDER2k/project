@@ -1,0 +1,492 @@
+{% extends "base_executivo.html" %}
+
+{% block title %}Sobre - ContaSmart Pro{% endblock %}
+{% block page_title %}Sobre o Sistema{% endblock %}
+{% block page_subtitle %}Conheça nossa tecnologia e equipe{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
+<li><a href="#">{{ 'Sobre' }}</a></li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .about-hero {
+        background: linear-gradient(135deg, var(--bg-card), var(--bg-tertiary));
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-xxl);
+        text-align: center;
+        margin-bottom: var(--spacing-xl);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .about-hero::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color), var(--accent-color));
+    }
+    
+    .about-logo {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto var(--spacing-lg);
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        border-radius: var(--border-radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+    }
+    
+    .about-content {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-xl);
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .about-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-xl);
+        transition: all var(--transition-normal);
+    }
+    
+    .about-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--elevation-3);
+    }
+    
+    .about-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        border-radius: var(--border-radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .team-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-xl);
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .team-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--spacing-lg);
+        margin-top: var(--spacing-lg);
+    }
+    
+    .team-member {
+        text-align: center;
+        padding: var(--spacing-lg);
+        background: var(--bg-tertiary);
+        border-radius: var(--border-radius-lg);
+        border: 1px solid var(--border-color);
+        transition: all var(--transition-normal);
+    }
+    
+    .team-member:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+    
+    .member-avatar {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto var(--spacing-md);
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+    }
+    
+    .member-name {
+        font-size: var(--font-size-lg);
+        font-weight: 700;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .member-role {
+        color: var(--primary-color);
+        font-weight: 600;
+        margin-bottom: var(--spacing-sm);
+        font-family: var(--font-mono);
+    }
+    
+    .contact-info {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-sm);
+        color: var(--text-secondary);
+        font-size: var(--font-size-sm);
+        margin-top: var(--spacing-sm);
+    }
+    
+    .tech-stack {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-xl);
+    }
+    
+    .tech-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: var(--spacing-md);
+        margin-top: var(--spacing-lg);
+    }
+    
+    .tech-item {
+        text-align: center;
+        padding: var(--spacing-md);
+        background: var(--bg-tertiary);
+        border-radius: var(--border-radius-md);
+        border: 1px solid var(--border-color);
+    }
+    
+    .tech-icon {
+        font-size: 2rem;
+        margin-bottom: var(--spacing-sm);
+        color: var(--primary-color);
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-lg);
+        margin: var(--spacing-xl) 0;
+    }
+    
+    .stat-card {
+        text-align: center;
+        padding: var(--spacing-lg);
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: var(--spacing-sm);
+        background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-family: var(--font-mono);
+    }
+    
+    @media (max-width: 768px) {
+        .about-hero {
+            padding: var(--spacing-xl);
+        }
+        
+        .team-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .tech-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="about-hero">
+    <div class="about-logo">
+        <i class="fas fa-chart-network"></i>
+    </div>
+    <h1>ContaSmart Pro Executive</h1>
+    <p class="text-muted" style="font-size: var(--font-size-lg); max-width: 800px; margin: var(--spacing-md) auto;">
+        Sistema de gestão financeira avançada com design executivo futurista, 
+        análise preditiva e inteligência artificial integrada.
+    </p>
+    <div class="version-badge" style="display: inline-block; margin-top: var(--spacing-md);">
+        <span class="neon-badge success">v2.0.1 Executive</span>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-number">10+</div>
+        <div class="stat-label">Funcionalidades</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">24/7</div>
+        <div class="stat-label">Disponibilidade</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">A+</div>
+        <div class="stat-label">Segurança</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-number">99.9%</div>
+        <div class="stat-label">Uptime</div>
+    </div>
+</div>
+
+<!-- About Content -->
+<div class="about-content">
+    <div class="about-card">
+        <div class="about-icon">
+            <i class="fas fa-rocket"></i>
+        </div>
+        <h3>Tecnologia de Ponta</h3>
+        <p>Sistema desenvolvido com as mais recentes tecnologias web, oferecendo performance excepcional e experiência de usuário premium.</p>
+        <ul style="margin-top: var(--spacing-md); padding-left: var(--spacing-lg); color: var(--text-secondary);">
+            <li>Arquitetura moderna e escalável</li>
+            <li>Design responsivo e acessível</li>
+            <li>APIs RESTful completas</li>
+            <li>Banco de dados otimizado</li>
+        </ul>
+    </div>
+    
+    <div class="about-card">
+        <div class="about-icon">
+            <i class="fas fa-shield-alt"></i>
+        </div>
+        <h3>Segurança Máxima</h3>
+        <p>Proteção bancária nível corporativo com múltiplas camadas de segurança e conformidade com as melhores práticas do mercado.</p>
+        <ul style="margin-top: var(--spacing-md); padding-left: var(--spacing-lg); color: var(--text-secondary);">
+            <li>Criptografia de ponta a ponta</li>
+            <li>Autenticação de dois fatores</li>
+            <li>Backup automático diário</li>
+            <li>Monitoramento 24/7</li>
+        </ul>
+    </div>
+    
+    <div class="about-card">
+        <div class="about-icon">
+            <i class="fas fa-brain"></i>
+        </div>
+        <h3>Inteligência Artificial</h3>
+        <p>Análise preditiva avançada que aprende com seus dados financeiros para fornecer insights valiosos e recomendações personalizadas.</p>
+        <ul style="margin-top: var(--spacing-md); padding-left: var(--spacing-lg); color: var(--text-secondary);">
+            <li>Previsão de tendências</li>
+            <li>Detecção de anomalias</li>
+            <li>Recomendações inteligentes</li>
+            <li>Chatbot financeiro</li>
+        </ul>
+    </div>
+</div>
+
+<!-- Team Section -->
+<div class="team-section">
+    <h2 style="text-align: center; margin-bottom: var(--spacing-lg);">
+        <i class="fas fa-users"></i> Nossa Equipe
+    </h2>
+    <p style="text-align: center; color: var(--text-secondary); max-width: 800px; margin: 0 auto var(--spacing-xl);">
+        Desenvolvido por especialistas em finanças e tecnologia comprometidos em 
+        revolucionar a gestão financeira pessoal e corporativa.
+    </p>
+    
+    <div class="team-grid">
+        <div class="team-member">
+            <div class="member-avatar">
+                <i class="fas fa-user-tie"></i>
+            </div>
+            <h3 class="member-name">Deyvid Santos Luz</h3>
+            <div class="member-role">CEO & Desenvolvedor Principal</div>
+            <p style="color: var(--text-secondary); font-size: var(--font-size-sm);">
+                Especialista em sistemas financeiros é
+                desenvolvimento de software empresarial.
+            </p>
+            <div class="contact-info">
+                <i class="fas fa-envelope"></i>
+                <span>suportdeyvid@gmail.com</span>
+            </div>
+            <div class="contact-info">
+                <i class="fas fa-building"></i>
+                <span>deyv's company</span>
+            </div>
+        </div>
+        
+        <div class="team-member">
+            <div class="member-avatar">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h3 class="member-name">Equipe de Análise</h3>
+            <div class="member-role">Especialistas Financeiros</div>
+            <p style="color: var(--text-secondary); font-size: var(--font-size-sm);">
+                Analistas certificados com experiência em gestão de patrimônio, 
+                investimentos e planejamento financeiro estratégico.
+            </p>
+            <div class="contact-info">
+                <i class="fas fa-graduation-cap"></i>
+                <span>CFA & CFP Certificados</span>
+            </div>
+        </div>
+        
+        <div class="team-member">
+            <div class="member-avatar">
+                <i class="fas fa-code"></i>
+            </div>
+            <h3 class="member-name">Equipe de Desenvolvimento</h3>
+            <div class="member-role">Engenheiros de Software</div>
+            <p style="color: var(--text-secondary); font-size: var(--font-size-sm);">
+                Desenvolvedores full-stack especializados em Python, Flask, 
+                JavaScript moderno e bancos de dados.
+            </p>
+            <div class="contact-info">
+                <i class="fas fa-server"></i>
+                <span>Infraestrutura Cloud</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tech Stack -->
+<div class="tech-stack">
+    <h2 style="text-align: center; margin-bottom: var(--spacing-lg);">
+        <i class="fas fa-layer-group"></i> Tecnologias Utilizadas
+    </h2>
+    
+    <div class="tech-grid">
+        <div class="tech-item">
+            <div class="tech-icon">
+                <i class="fab fa-python"></i>
+            </div>
+            <div class="tech-name">Python</div>
+            <div class="tech-desc" style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                Backend & IA
+            </div>
+        </div>
+        
+        <div class="tech-item">
+            <div class="tech-icon">
+                <i class="fab fa-js"></i>
+            </div>
+            <div class="tech-name">JavaScript</div>
+            <div class="tech-desc" style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                Frontend & Interação
+            </div>
+        </div>
+        
+        <div class="tech-item">
+            <div class="tech-icon">
+                <i class="fas fa-database"></i>
+            </div>
+            <div class="tech-name">SQLite</div>
+            <div class="tech-desc" style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                Banco de Dados
+            </div>
+        </div>
+        
+        <div class="tech-item">
+            <div class="tech-icon">
+                <i class="fab fa-html5"></i>
+            </div>
+            <div class="tech-name">HTML5</div>
+            <div class="tech-desc" style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                Estrutura Web
+            </div>
+        </div>
+        
+        <div class="tech-item">
+            <div class="tech-icon">
+                <i class="fab fa-css3-alt"></i>
+            </div>
+            <div class="tech-name">CSS3</div>
+            <div class="tech-desc" style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                Estilos Avançados
+            </div>
+        </div>
+        
+        <div class="tech-item">
+            <div class="tech-icon">
+                <i class="fab fa-git-alt"></i>
+            </div>
+            <div class="tech-name">Git</div>
+            <div class="tech-desc" style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                Controle de Versão
+            </div>
+        </div>
+        
+        <div class="tech-item">
+            <div class="tech-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="tech-name">Chart.js</div>
+            <div class="tech-desc" style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                Visualização de Dados
+            </div>
+        </div>
+        
+        <div class="tech-item">
+            <div class="tech-icon">
+                <i class="fas fa-server"></i>
+            </div>
+            <div class="tech-name">Flask</div>
+            <div class="tech-desc" style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                Framework Web
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mission Section -->
+<div class="about-card" style="margin-top: var(--spacing-xl);">
+    <div style="text-align: center;">
+        <h2><i class="fas fa-bullseye"></i> Nossa Missão</h2>
+        <p style="color: var(--text-secondary); font-size: var(--font-size-lg); max-width: 800px; margin: var(--spacing-lg) auto;">
+            "Democratizar o acesso à gestão financeira inteligente, fornecendo ferramentas 
+            profissionais acessíveis para indivíduos e empresas transformarem sua relação 
+            com o dinheiro através da tecnologia."
+        </p>
+        <div style="display: flex; justify-content: center; gap: var(--spacing-lg); margin-top: var(--spacing-xl);">
+            <div class="neon-badge primary">
+                <i class="fas fa-check"></i>
+                Inovação Constante
+            </div>
+            <div class="neon-badge success">
+                <i class="fas fa-check"></i>
+                Segurança Garantida
+            </div>
+            <div class="neon-badge warning">
+                <i class="fas fa-check"></i>
+                Suporte 24/7
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Contact CTA -->
+<div style="text-align: center; margin-top: var(--spacing-xxl); padding: var(--spacing-xl); background: var(--bg-card); border-radius: var(--border-radius-lg); border: 1px solid var(--border-color);">
+    <h2 style="margin-bottom: var(--spacing-lg);">Precisa de Ajuda Personalizada?</h2>
+    <p style="color: var(--text-secondary); margin-bottom: var(--spacing-xl); max-width: 600px; margin-left: auto; margin-right: auto;">
+        Oferecemos consultoria personalizada, customização do sistema para necessidades 
+        específicas e implementação em empresas.
+    </p>
+    <div style="display: flex; gap: var(--spacing-lg); justify-content: center;">
+        <a href="mailto:suportdeyvid@gmail.com" class="neon-btn primary lg">
+            <i class="fas fa-envelope"></i>
+            Entre em Contato
+        </a>
+        <a href="{{ url_for('dashboard') }}" class="neon-btn outline lg">
+            <i class="fas fa-rocket"></i>
+            Experimente o Sistema
+        </a>
+    </div>
+</div>
+{% endblock %}

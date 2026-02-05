@@ -1,0 +1,666 @@
+{% extends "base_executivo.html" %}
+
+{% block title %}Perfil - ContaSmart Pro{% endblock %}
+{% block page_title %}Meu Perfil{% endblock %}
+{% block page_subtitle %}Gerencie suas informações pessoais e preferências{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="#">Perfil</a></li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-header {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xl);
+        margin-bottom: var(--spacing-xl);
+        padding-bottom: var(--spacing-xl);
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: var(--border-radius-round);
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        position: relative;
+    }
+    
+    .profile-avatar-edit {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background: var(--bg-tertiary);
+        border: 2px solid var(--bg-card);
+        border-radius: 50%;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    
+    .profile-avatar-edit:hover {
+        background: var(--primary-color);
+        color: white;
+    }
+    
+    .profile-info h1 {
+        font-size: 2rem;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .profile-role {
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .profile-stats {
+        display: flex;
+        gap: var(--spacing-xl);
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        font-family: var(--font-mono);
+        margin-bottom: 2px;
+    }
+    
+    .stat-label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .profile-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: var(--spacing-xl);
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    @media (max-width: 992px) {
+        .profile-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .profile-section {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        overflow: hidden;
+    }
+    
+    .section-title {
+        padding: var(--spacing-lg);
+        border-bottom: 1px solid var(--border-color);
+        font-size: 1.25rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .section-content {
+        padding: var(--spacing-lg);
+    }
+    
+    .form-group {
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: var(--spacing-xs);
+        font-weight: 500;
+        color: var(--text-secondary);
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 12px 16px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-md);
+        color: var(--text-primary);
+        font-family: var(--font-main);
+        font-size: 1rem;
+        transition: all var(--transition-fast);
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(0, 102, 255, 0.2);
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-lg);
+    }
+    
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    .select-wrapper {
+        position: relative;
+    }
+    
+    .select-wrapper select {
+        appearance: none;
+        padding-right: 40px;
+    }
+    
+    .select-wrapper::after {
+        content: '▼';
+        position: absolute;
+        right: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
+        pointer-events: none;
+    }
+    
+    .theme-options {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: var(--spacing-md);
+    }
+    
+    .theme-option {
+        border: 2px solid var(--border-color);
+        border-radius: var(--border-radius-md);
+        padding: var(--spacing-md);
+        text-align: center;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    
+    .theme-option:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+    
+    .theme-option.selected {
+        border-color: var(--primary-color);
+        background: rgba(0, 102, 255, 0.1);
+    }
+    
+    .theme-preview {
+        width: 60px;
+        height: 40px;
+        border-radius: 4px;
+        margin: 0 auto var(--spacing-sm);
+    }
+    
+    .theme-executive .theme-preview {
+        background: linear-gradient(135deg, #0066ff, #00ff88);
+    }
+    
+    .theme-executive-dark .theme-preview {
+        background: linear-gradient(135deg, #0044cc, #009966);
+    }
+    
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        padding: var(--spacing-md);
+        border-bottom: 1px solid var(--border-light);
+        transition: background var(--transition-fast);
+    }
+    
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    
+    .activity-item:hover {
+        background: var(--bg-tertiary);
+    }
+    
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--border-radius-round);
+        background: var(--bg-tertiary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-color);
+    }
+    
+    .activity-content {
+        flex: 1;
+    }
+    
+    .activity-title {
+        font-weight: 500;
+        margin-bottom: 2px;
+    }
+    
+    .activity-date {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+    }
+    
+    .top-categories {
+        margin-top: var(--spacing-md);
+    }
+    
+    .category-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--spacing-sm) 0;
+        border-bottom: 1px solid var(--border-light);
+    }
+    
+    .category-item:last-child {
+        border-bottom: none;
+    }
+    
+    .category-name {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .category-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+    
+    .category-count {
+        font-family: var(--font-mono);
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-header">
+    <div class="profile-avatar">
+        <i class="fas fa-user-tie"></i>
+        <div class="profile-avatar-edit">
+            <i class="fas fa-camera"></i>
+        </div>
+    </div>
+    
+    <div class="profile-info">
+        <h1>{{ user.full_name or user.username }}</h1>
+        <p class="profile-role">Financial Executive</p>
+        
+        <div class="profile-stats">
+            <div class="stat-item">
+                <div class="stat-value">{{ stats.total_transactions if stats else 0 }}</div>
+                <div class="stat-label">Transações</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ stats.total_goals if stats else 0 }}</div>
+                <div class="stat-label">Metas</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ stats.days_active if stats else 1 }}d</div>
+                <div class="stat-label">Dias Ativo</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ user.created_at[:10] if user.created_at else 'N/A' }}</div>
+                <div class="stat-label">Desde</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="profile-grid">
+    <!-- Informações Pessoais -->
+    <div class="profile-section">
+        <div class="section-title">
+            <span>Informações Pessoais</span>
+            <button class="neon-btn sm" id="saveProfileBtn">
+                <i class="fas fa-save"></i>
+                Salvar Alterações
+            </button>
+        </div>
+        
+        <div class="section-content">
+            <form id="profileForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Nome Completo</label>
+                        <input type="text" class="form-control" id="fullName" 
+                               value="{{ user.full_name or '' }}" 
+                               placeholder="Digite seu nome completo">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Nome de Usuário</label>
+                        <input type="text" class="form-control" 
+                               value="{{ user.username or '' }}" 
+                               disabled style="opacity: 0.7;">
+                        <small style="color: var(--text-muted); font-size: 0.85rem;">
+                            O nome de usuário não pode ser alterado
+                        </small>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" id="email" 
+                           value="{{ user.email or '' }}" 
+                           placeholder="seu@email.com">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Moeda</label>
+                        <div class="select-wrapper">
+                            <select class="form-control" id="currency">
+                                <option value="BRL" selected>Real Brasileiro (R$)</option>
+                                <option value="USD">Dólar Americano ($)</option>
+                                <option value="EUR">Euro (€)</option>
+                                <option value="GBP">Libra Esterlina (£)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Idioma</label>
+                        <div class="select-wrapper">
+                            <select class="form-control" id="language">
+                                <option value="pt_BR" selected>Português (Brasil)</option>
+                                <option value="en_US">English (US)</option>
+                                <option value="es_ES">Español</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Tema da Interface</label>
+                    <div class="theme-options">
+                        <div class="theme-option theme-executive selected" data-theme="executive">
+                            <div class="theme-preview"></div>
+                            <div>Tema Executivo</div>
+                        </div>
+                        <div class="theme-option theme-executive-dark" data-theme="executive-dark">
+                            <div class="theme-preview"></div>
+                            <div>Executivo Escuro</div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Atividades Recentes -->
+    <div class="profile-section">
+        <div class="section-title">
+            <span>Atividades Recentes</span>
+        </div>
+        
+        <div class="section-content">
+            <div class="activities-list">
+                {% for activity in activities %}
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="fas fa-{{ activity.icon }}"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">{{ activity.action }}</div>
+                        <div class="activity-date">{{ activity.date }}</div>
+                    </div>
+                </div>
+                {% else %}
+                <div style="text-align: center; padding: var(--spacing-xl); color: var(--text-muted);">
+                    <i class="fas fa-history" style="font-size: 2rem; margin-bottom: var(--spacing-md); display: block;"></i>
+                    Nenhuma atividade recente
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="profile-grid">
+    <!-- Categorias Mais Usadas -->
+    <div class="profile-section">
+        <div class="section-title">
+            <span>Categorias Mais Usadas</span>
+        </div>
+        
+        <div class="section-content">
+            {% if stats.top_categories and stats.top_categories|length > 0 %}
+            <div class="top-categories">
+                {% for category in stats.top_categories %}
+                <div class="category-item">
+                    <div class="category-name">
+                        <div class="category-color" style="background-color: {{ category.color or '#0066ff' }};"></div>
+                        <span>{{ category.name }}</span>
+                    </div>
+                    <div class="category-count">{{ category.count }} transações</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: var(--spacing-xl); color: var(--text-muted);">
+                <i class="fas fa-tags" style="font-size: 2rem; margin-bottom: var(--spacing-md); display: block;"></i>
+                Sem dados de categorias disponíveis
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Informações da Conta -->
+    <div class="profile-section">
+        <div class="section-title">
+            <span>Informações da Conta</span>
+        </div>
+        
+        <div class="section-content">
+            <div class="account-info">
+                <div class="info-item" style="margin-bottom: var(--spacing-lg);">
+                    <div class="form-label">ID do Usuário</div>
+                    <div class="form-control" style="font-family: var(--font-mono); background: var(--bg-tertiary);">
+                        {{ session.user_id if session.user_id else 'N/A' }}
+                    </div>
+                </div>
+                
+                <div class="info-item" style="margin-bottom: var(--spacing-lg);">
+                    <div class="form-label">Data de Criação</div>
+                    <div class="form-control" style="font-family: var(--font-mono); background: var(--bg-tertiary);">
+                        {{ user.created_at[:10] if user.created_at else 'N/A' }}
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="form-label">Último Acesso</div>
+                    <div class="form-control" style="font-family: var(--font-mono); background: var(--bg-tertiary);">
+                        {{ now.strftime('%d/%m/%Y %H:%M') if now else 'N/A' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Seção de Segurança -->
+<div class="profile-section" style="margin-top: var(--spacing-xl);">
+    <div class="section-title">
+        <span>Segurança</span>
+    </div>
+    
+    <div class="section-content">
+        <div class="security-actions">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--spacing-lg);">
+                <div>
+                    <h4 style="margin-bottom: var(--spacing-md); font-size: 1rem; font-weight: 600;">Alterar Senha</h4>
+                    <p style="color: var(--text-muted); margin-bottom: var(--spacing-md); font-size: 0.9rem;">
+                        Para sua segurança, recomendamos alterar sua senha regularmente.
+                    </p>
+                    <button class="neon-btn outline" onclick="openChangePasswordModal()">
+                        <i class="fas fa-key"></i>
+                        Alterar Senha
+                    </button>
+                </div>
+                
+                <div>
+                    <h4 style="margin-bottom: var(--spacing-md); font-size: 1rem; font-weight: 600;">Sessões Ativas</h4>
+                    <p style="color: var(--text-muted); margin-bottom: var(--spacing-md); font-size: 0.9rem;">
+                        Você está logado em 1 dispositivo.
+                    </p>
+                    <button class="neon-btn outline" onclick="viewActiveSessions()">
+                        <i class="fas fa-desktop"></i>
+                        Ver Sessões
+                    </button>
+                </div>
+                
+                <div>
+                    <h4 style="margin-bottom: var(--spacing-md); font-size: 1rem; font-weight: 600;">Exportar Dados</h4>
+                    <p style="color: var(--text-muted); margin-bottom: var(--spacing-md); font-size: 0.9rem;">
+                        Faça backup de todas as suas transações e metas.
+                    </p>
+                    <button class="neon-btn outline" onclick="exportData()">
+                        <i class="fas fa-file-export"></i>
+                        Exportar Dados
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Selecionar tema atual
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'executive';
+        document.querySelectorAll('.theme-option').forEach(option => {
+            if (option.dataset.theme === currentTheme) {
+                option.classList.add('selected');
+            }
+        });
+        
+        // Selecionar tema
+        document.querySelectorAll('.theme-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.theme-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                this.classList.add('selected');
+            });
+        });
+        
+        // Salvar perfil
+        const saveProfileBtn = document.getElementById('saveProfileBtn');
+        if (saveProfileBtn) {
+            saveProfileBtn.addEventListener('click', function() {
+                saveProfile();
+            });
+        }
+        
+        // Configurar selects
+        const currencySelect = document.getElementById('currency');
+        const languageSelect = document.getElementById('language');
+        
+        if (currencySelect) {
+            currencySelect.value = '{{ user.currency or "BRL" }}';
+        }
+        
+        if (languageSelect) {
+            languageSelect.value = '{{ user.language or "pt_BR" }}';
+        }
+    });
+    
+    function saveProfile() {
+        const fullName = document.getElementById('fullName').value;
+        const email = document.getElementById('email').value;
+        const currency = document.getElementById('currency').value;
+        const language = document.getElementById('language').value;
+        const theme = document.querySelector('.theme-option.selected').dataset.theme;
+        
+        if (!email) {
+            alert('O email é obrigatório.');
+            return;
+        }
+        
+        const data = {
+            full_name: fullName,
+            email: email,
+            currency: currency,
+            language: language,
+            theme: theme
+        };
+        
+        fetch('/api/update_profile', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                // Atualizar tema imediatamente
+                document.documentElement.setAttribute('data-theme', theme);
+                
+                // Atualizar botão de tema no header
+                const themeToggle = document.querySelector('.toggle-theme');
+                if (themeToggle) {
+                    const icon = themeToggle.querySelector('i');
+                    const text = themeToggle.querySelector('span');
+                    if (icon && text) {
+                        icon.className = theme === 'executive-dark' ? 'fas fa-sun' : 'fas fa-moon';
+                        text.textContent = theme === 'executive-dark' ? 'Tema Claro' : 'Tema Escuro';
+                    }
+                }
+            } else {
+                alert('Erro: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Erro ao salvar perfil.');
+        });
+    }
+    
+    function openChangePasswordModal() {
+        alert('Funcionalidade de alteração de senha - Implementar');
+        // Implementar modal de alteração de senha
+    }
+    
+    function viewActiveSessions() {
+        alert('Funcionalidade de sessões ativas - Implementar');
+        // Implementar visualização de sessões
+    }
+    
+    function exportData() {
+        alert('Funcionalidade de exportação de dados - Implementar');
+        // Implementar exportação de dados
+    }
+</script>
+{% endblock %}

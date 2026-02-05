@@ -1,0 +1,474 @@
+{% extends "base.html" %}
+
+{% block title %}DRE - ContaSmart Pro{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-2">
+                        <i class="fas fa-file-invoice-dollar text-primary me-2"></i>
+                        Demonstrativo de Resultados (DRE)
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Análise de receitas, despesas e resultado do exercício
+                    </p>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-calendar me-2"></i>
+                        {% if periodo == 'mensal' %}
+                            {{ mes }}/{{ ano }}
+                        {% elif periodo == 'trimestral' %}
+                            {{ ((mes|int)//4)+1 }}º Trimestre {{ ano }}
+                        {% else %}
+                            {{ ano }}
+                        {% endif %}
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><h6 class="dropdown-header">Período</h6></li>
+                        <li><a class="dropdown-item" href="{{ url_for('dre') }}?periodo=mensal&ano={{ ano }}&mes={{ mes }}">Mensal</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('dre') }}?periodo=trimestral&ano={{ ano }}&mes={{ mes }}">Trimestral</a></li>
+                        <li><a class="dropdown-item" href="{{ url_for('dre') }}?periodo=anual&ano={{ ano }}">Anual</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('dre') }}" class="row g-3">
+                        <input type="hidden" name="periodo" value="{{ periodo }}">
+                        <div class="col-md-4">
+                            <label class="form-label">Ano</label>
+                            <select name="ano" class="form-select">
+                                {% for year in range(2020, 2027) %}
+                                <option value="{{ year }}" {% if ano == year|string %}selected{% endif %}>{{ year }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% if periodo != 'anual' %}
+                        <div class="col-md-4">
+                            <label class="form-label">
+                                {% if periodo == 'mensal' %}Mês{% else %}Trimestre{% endif %}
+                            </label>
+                            <select name="mes" class="form-select">
+                                {% if periodo == 'mensal' %}
+                                {% for month in range(1, 13) %}
+                                <option value="{{ month }}" {% if mes == month|string %}selected{% endif %}>{{ month }}</option>
+                                {% endfor %}
+                                {% else %}
+                                {% for quarter in range(1, 5) %}
+                                <option value="{{ quarter }}" {% if mes == quarter|string %}selected{% endif %}>{{ quarter }}º Trimestre</option>
+                                {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+                        {% endif %}
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-filter me-2"></i>Aplicar Filtro
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resultado Principal -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-4">
+            <div class="card border-start border-success border-4 shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                                Total Receitas
+                            </div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">
+                                R$ {{ "%.2f"|format(total_receitas) }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-arrow-up fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card border-start border-danger border-4 shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs fw-bold text-danger text-uppercase mb-1">
+                                Total Despesas
+                            </div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">
+                                R$ {{ "%.2f"|format(total_despesas) }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-arrow-down fa-2x text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card border-start border-primary border-4 shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs fw-bold text-primary text-uppercase mb-1">
+                                Resultado
+                            </div>
+                            <div class="h5 mb-0 fw-bold {% if lucro_prejuizo >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                R$ {{ "%.2f"|format(lucro_prejuizo) }}
+                            </div>
+                            <div class="mt-2">
+                                <span class="badge {% if lucro_prejuizo >= 0 %}bg-success{% else %}bg-danger{% endif %}">
+                                    {% if lucro_prejuizo >= 0 %}
+                                    Lucro: {{ "%.1f"|format(margem_bruta) }}%
+                                    {% else %}
+                                    Prejuízo
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DRE Detalhado -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold text-primary">
+                        <i class="fas fa-arrow-up text-success me-2"></i>
+                        Receitas por Categoria
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if receitas %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Categoria</th>
+                                    <th class="text-end">Valor</th>
+                                    <th class="text-end">%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for receita in receitas %}
+                                <tr>
+                                    <td>{{ receita.name }}</td>
+                                    <td class="text-end text-success">
+                                        R$ {{ "%.2f"|format(receita.total) }}
+                                    </td>
+                                    <td class="text-end">
+                                        {{ "%.1f"|format((receita.total / total_receitas * 100) if total_receitas > 0 else 0) }}%
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="fw-bold">
+                                    <td>Total Receitas</td>
+                                    <td class="text-end text-success">
+                                        R$ {{ "%.2f"|format(total_receitas) }}
+                                    </td>
+                                    <td class="text-end">100%</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-money-bill-wave fa-2x text-muted mb-3"></i>
+                        <p class="text-muted">Nenhuma receita neste período</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold text-primary">
+                        <i class="fas fa-arrow-down text-danger me-2"></i>
+                        Despesas por Categoria
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if despesas %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Categoria</th>
+                                    <th class="text-end">Valor</th>
+                                    <th class="text-end">%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for despesa in despesas %}
+                                <tr>
+                                    <td>{{ despesa.name }}</td>
+                                    <td class="text-end text-danger">
+                                        R$ {{ "%.2f"|format(despesa.total) }}
+                                    </td>
+                                    <td class="text-end">
+                                        {{ "%.1f"|format((despesa.total / total_despesas * 100) if total_despesas > 0 else 0) }}%
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="fw-bold">
+                                    <td>Total Despesas</td>
+                                    <td class="text-end text-danger">
+                                        R$ {{ "%.2f"|format(total_despesas) }}
+                                    </td>
+                                    <td class="text-end">100%</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-shopping-cart fa-2x text-muted mb-3"></i>
+                        <p class="text-muted">Nenhuma despesa neste período</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold text-primary">
+                        <i class="fas fa-chart-bar me-2"></i>
+                        Comparativo Receitas vs Despesas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area" style="height: 300px;">
+                        <canvas id="dreChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold text-primary">
+                        <i class="fas fa-chart-pie me-2"></i>
+                        Distribuição de Despesas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4" style="height: 250px;">
+                        <canvas id="expensesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumo -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold text-primary">
+                        <i class="fas fa-file-alt me-2"></i>
+                        Resumo do DRE
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th colspan="2">DEMONSTRATIVO DE RESULTADOS</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="fw-bold">Receitas Operacionais</td>
+                                    <td class="text-end text-success fw-bold">
+                                        R$ {{ "%.2f"|format(total_receitas) }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">(-) Despesas Operacionais</td>
+                                    <td class="text-end text-danger fw-bold">
+                                        R$ {{ "%.2f"|format(total_despesas) }}
+                                    </td>
+                                </tr>
+                                <tr class="table-active">
+                                    <td class="fw-bold">RESULTADO DO EXERCÍCIO</td>
+                                    <td class="text-end {% if lucro_prejuizo >= 0 %}text-success{% else %}text-danger{% endif %} fw-bold">
+                                        R$ {{ "%.2f"|format(lucro_prejuizo) }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Margem Bruta</td>
+                                    <td class="text-end {% if margem_bruta >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        {{ "%.1f"|format(margem_bruta) }}%
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Dados para os gráficos
+    const receitasData = {{ receitas|tojson|default('[]') }};
+    const despesasData = {{ despesas|tojson|default('[]') }};
+    
+    // Gráfico de barras - Comparativo
+    const dreCtxElement = document.getElementById('dreChart');
+    if (dreCtxElement) {
+        const dreCtx = dreCtxElement.getContext('2d');
+        
+        const receitasLabels = receitasData.map(r => r.name);
+        const receitasValores = receitasData.map(r => r.total);
+        const despesasLabels = despesasData.map(d => d.name);
+        const despesasValores = despesasData.map(d => d.total);
+        
+        // Criar arrays combinados para o gráfico
+        const allLabels = [...receitasLabels];
+        const receitasArray = [...receitasValores];
+        const despesasArray = [];
+        
+        // Adicionar despesas ao array combinado
+        despesasLabels.forEach((label, index) => {
+            allLabels.push(label);
+            receitasArray.push(0);
+            despesasArray.push(despesasValores[index]);
+        });
+        
+        new Chart(dreCtx, {
+            type: 'bar',
+            data: {
+                labels: allLabels,
+                datasets: [
+                    {
+                        label: 'Receitas',
+                        data: receitasArray,
+                        backgroundColor: '#4e73df',
+                        borderColor: '#4e73df',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Despesas',
+                        data: despesasArray,
+                        backgroundColor: '#e74a3b',
+                        borderColor: '#e74a3b',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value.toLocaleString('pt-BR');
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': R$ ' + context.parsed.y.toLocaleString('pt-BR', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Gráfico de pizza - Despesas
+    const expensesCtxElement = document.getElementById('expensesChart');
+    if (expensesCtxElement) {
+        const expensesCtx = expensesCtxElement.getContext('2d');
+        
+        const expensesData = {
+            labels: despesasData.map(d => d.name),
+            datasets: [{
+                data: despesasData.map(d => d.total),
+                backgroundColor: [
+                    '#e74a3b', '#f6c23e', '#1cc88a', '#36b9cc', 
+                    '#4e73df', '#6610f2', '#e83e8c', '#fd7e14'
+                ],
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+            }]
+        };
+        
+        new Chart(expensesCtx, {
+            type: 'doughnut',
+            data: expensesData,
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return context.label + ': R$ ' + value.toLocaleString('pt-BR') + 
+                                       ' (' + percentage + '%)';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

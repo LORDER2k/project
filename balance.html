@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+
+{% block title %}Balanço Patrimonial - ContaSmart Pro{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-2">
+                        <i class="fas fa-balance-scale text-primary me-2"></i>
+                        Balanço Patrimonial
+                    </h1>
+                    <p class="text-muted mb-0">
+                        Posição patrimonial e análise de ativos e passivos
+                    </p>
+                </div>
+                <div class="text-end">
+                    <h4 class="mb-0 {% if patrimonio >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        Patrimônio: R$ {{ "%.2f"|format(patrimonio) }}
+                    </h4>
+                    <small class="text-muted">Posição Atual</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cards Principais -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-4">
+            <div class="card border-start border-success border-4 shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs fw-bold text-success text-uppercase mb-1">
+                                Ativos
+                            </div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">
+                                R$ {{ "%.2f"|format(ativos.valor or 0) }}
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">{{ ativos.descricao }}</small>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-arrow-up fa-2x text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card border-start border-danger border-4 shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs fw-bold text-danger text-uppercase mb-1">
+                                Passivos
+                            </div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">
+                                R$ {{ "%.2f"|format(passivos.valor or 0) }}
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">{{ passivos.descricao }}</small>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-arrow-down fa-2x text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="card border-start border-primary border-4 shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs fw-bold text-primary text-uppercase mb-1">
+                                Patrimônio Líquido
+                            </div>
+                            <div class="h5 mb-0 fw-bold {% if patrimonio >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                R$ {{ "%.2f"|format(patrimonio) }}
+                            </div>
+                            <div class="mt-2">
+                                <span class="badge {% if patrimonio >= 0 %}bg-success{% else %}bg-danger{% endif %}">
+                                    {% if patrimonio >= 0 %}Positivo{% else %}Negativo{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line fa-2x text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Balanço Detalhado -->
+    <div class="row">
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 bg-success text-white">
+                    <h6 class="m-0 fw-bold">
+                        <i class="fas fa-arrow-up me-2"></i>
+                        ATIVOS
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Descrição</th>
+                                    <th class="text-end">Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-money-bill-wave text-success me-2"></i>
+                                        Saldo Disponível
+                                    </td>
+                                    <td class="text-end text-success fw-bold">
+                                        R$ {{ "%.2f"|format(ativos.valor or 0) }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-piggy-bank text-success me-2"></i>
+                                        Reservas
+                                    </td>
+                                    <td class="text-end">R$ 0,00</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-home text-success me-2"></i>
+                                        Bens e Imóveis
+                                    </td>
+                                    <td class="text-end">R$ 0,00</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-car text-success me-2"></i>
+                                        Veículos
+                                    </td>
+                                    <td class="text-end">R$ 0,00</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-laptop text-success me-2"></i>
+                                        Equipamentos
+                                    </td>
+                                    <td class="text-end">R$ 0,00</td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-success">
+                                <tr>
+                                    <th>TOTAL ATIVOS</th>
+                                    <th class="text-end">R$ {{ "%.2f"|format(ativos.valor or 0) }}</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <p class="small text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Ativos representam bens e direitos que geram benefícios econômicos futuros.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 bg-danger text-white">
+                    <h6 class="m-0 fw-bold">
+                        <i class="fas fa-arrow-down me-2"></i>
+                        PASSIVOS
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Descrição</th>
+                                    <th class="text-end">Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-credit-card text-danger me-2"></i>
+                                        Dívidas Pendentes
+                                    </td>
+                                    <td class="text-end text-danger fw-bold">
+                                        R$ {{ "%.2f"|format(passivos.valor or 0) }}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-file-invoice-dollar text-danger me-2"></i>
+                                        Contas a Pagar
+                                    </td>
+                                    <td class="text-end">R$ 0,00</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-hand-holding-usd text-danger me-2"></i>
+                                        Empréstimos
+                                    </td>
+                                    <td class="text-end">R$ 0,00</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-receipt text-danger me-2"></i>
+                                        Faturas em Aberto
+                                    </td>
+                                    <td class="text-end">R$ 0,00</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-chart-line text-danger me-2"></i>
+                                        Outras Obrigações
+                                    </td>
+                                    <td class="text-end">R$ 0,00</td>
+                                </tr>
+                            </tbody>
+                            <tfoot class="table-danger">
+                                <tr>
+                                    <th>TOTAL PASSIVOS</th>
+                                    <th class="text-end">R$ {{ "%.2f"|format(passivos.valor or 0) }}</th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <p class="small text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Passivos representam obrigações e dívidas que exigirão recursos futuros.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Evolução Patrimonial -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 fw-bold text-primary">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Evolução do Patrimônio (Últimos 6 Meses)
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-area" style="height: 300px;">
+                        <canvas id="patrimonyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Análise Patrimonial -->
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold text-primary">
+                        <i class="fas fa-percentage me-2"></i>
+                        Indicadores
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Endividamento</h6>
+                        <div class="progress mb-2" style="height: 10px;">
+                            {% set endividamento = (passivos.valor / ativos.valor * 100) if ativos.valor > 0 else 0 %}
+                            <div class="progress-bar bg-danger" 
+                                 role="progressbar" 
+                                 style="width: {{ endividamento|default(0) }}%;"
+                                 aria-valuenow="{{ endividamento|default(0) }}" 
+                                 aria-valuemin="0" 
+                                 aria-valuemax="100">
+                            </div>
+                        </div>
+                        <p class="small text-muted mb-0">
+                            {{ "%.1f"|format(endividamento) }}% do patrimônio comprometido
+                        </p>
+                    </div>
+                    <div class="mb-3">
+                        <h6>Liquidez</h6>
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                {% if patrimonio >= 0 %}
+                                <span class="badge bg-success">Saudável</span>
+                                {% else %}
+                                <span class="badge bg-danger">Crítica</span>
+                                {% endif %}
+                            </div>
+                            <div>
+                                <i class="fas fa-{% if patrimonio >= 0 %}check-circle text-success{% else %}exclamation-triangle text-danger{% endif %} fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8 mb-4">
+            <div class="card shadow h-100">
+                <div class="card-header py-3">
+                    <h6 class="m-0 fw-bold text-primary">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        Recomendações
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title text-success">
+                                        <i class="fas fa-arrow-up me-2"></i>Aumentar Ativos
+                                    </h6>
+                                    <ul class="small">
+                                        <li>Invista em educação financeira</li>
+                                        <li>Diversifique suas fontes de renda</li>
+                                        <li>Crie uma reserva de emergência</li>
+                                        <li>Considere investimentos de longo prazo</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-0 bg-light h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title text-danger">
+                                        <i class="fas fa-arrow-down me-2"></i>Reduzir Passivos
+                                    </h6>
+                                    <ul class="small">
+                                        <li>Priorize dívidas com juros altos</li>
+                                        <li>Negocie condições com credores</li>
+                                        <li>Evite novas dívidas desnecessárias</li>
+                                        <li>Crie um plano de pagamento</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gráfico de evolução patrimonial
+    const ctx = document.getElementById('patrimonyChart').getContext('2d');
+    
+    const meses = {{ meses|tojson }};
+    const patrimonioAcumulado = {{ patrimonio_acumulado|tojson }};
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: meses,
+            datasets: [{
+                label: 'Patrimônio Acumulado',
+                data: patrimonioAcumulado,
+                borderColor: '#4e73df',
+                backgroundColor: 'rgba(78, 115, 223, 0.05)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R$ ' + value.toLocaleString('pt-BR');
+                        }
+                    }
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Patrimônio: R$ ' + context.parsed.y.toLocaleString('pt-BR', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            });
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
