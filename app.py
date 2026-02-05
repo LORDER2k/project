@@ -1,187 +1,321 @@
+"""
+CONTASMART PRO EXECUTIVO - Sistema Financeiro
+Configurado para deploy no Render.com
+"""
+
+import os
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
-import os
 import json
 from datetime import datetime, timedelta
 from functools import wraps
 import math
 import traceback
 
+# ===== CONFIGURAÇÃO PARA RENDER =====
 app = Flask(__name__)
-app.secret_key = 'contasmart-executivo-2026-secret'
+
+# Configuração da secret key (Render injetará via variável de ambiente)
+app.secret_key = os.environ.get('SECRET_KEY', 'contasmart-executivo-2026-secret-dev')
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 
-# ===== CONFIGURAÇÃO =====
-DATABASE = 'database/contasmart.db'
+# Configuração de banco para Render
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+if DATABASE_URL:
+    DATABASE = DATABASE_URL
+    print(f"🔗 Usando PostgreSQL: {DATABASE[:50]}...")
+else:
+    DATABASE = 'database/contasmart.db'
+    print("📁 Usando SQLite local")
 
 # ===== FUNÇÕES AUXILIARES =====
 
 def get_db_connection():
     """Conectar ao banco de dados"""
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
-    return conn
+    if DATABASE.startswith('postgresql://'):
+        # PostgreSQL no Render
+        import psycopg2
+        from psycopg2.extras import DictCursor
+        
+        conn = psycopg2.connect(DATABASE, sslmode='require')
+        conn.cursor_factory = DictCursor
+        return conn
+    else:
+        # SQLite local
+        conn = sqlite3.connect(DATABASE)
+        conn.row_factory = sqlite3.Row
+        return conn
 
 def init_db():
     """Inicializar banco de dados"""
     print("🔄 Inicializando banco de dados executivo...")
-    os.makedirs('database', exist_ok=True)
+    
+    # Criar diretório database se for SQLite
+    if DATABASE == 'database/contasmart.db':
+        os.makedirs('database', exist_ok=True)
     
     conn = get_db_connection()
+    cursor = conn.cursor()
     
-    # Tabela de usuários
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            full_name TEXT,
-            avatar TEXT DEFAULT 'default.png',
-            theme TEXT DEFAULT 'executive',
-            currency TEXT DEFAULT 'BRL',
-            language TEXT DEFAULT 'pt_BR',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
-    # Tabela de categorias
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS categories (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            name TEXT NOT NULL,
-            type TEXT CHECK(type IN ('income', 'expense')) NOT NULL,
-            color TEXT DEFAULT '#0066ff',
-            icon TEXT DEFAULT 'fas fa-tag',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
-    # Tabela de transações
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS transactions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            type TEXT CHECK(type IN ('income', 'expense')) NOT NULL,
-            category_id INTEGER,
-            amount DECIMAL(10, 2) NOT NULL,
-            description TEXT,
-            transaction_date DATE NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (category_id) REFERENCES categories(id)
-        )
-    ''')
-    
-    # Tabela de metas
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS goals (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            title TEXT NOT NULL,
-            description TEXT,
-            target_amount DECIMAL(10, 2) NOT NULL,
-            current_amount DECIMAL(10, 2) DEFAULT 0,
-            deadline DATE,
-            priority TEXT CHECK(priority IN ('low', 'medium', 'high')),
-            is_completed BOOLEAN DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
-    # Tabela de alertas
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS alerts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            type TEXT NOT NULL,
-            title TEXT NOT NULL,
-            message TEXT NOT NULL,
-            icon TEXT DEFAULT 'fas fa-bell',
-            is_read BOOLEAN DEFAULT 0,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
-    # Verificar usuário admin
-    admin = conn.execute('SELECT * FROM users WHERE username = "admin"').fetchone()
-    if not admin:
-        hashed_password = generate_password_hash('admin2026')
-        conn.execute('''
-            INSERT INTO users (username, email, password, full_name, theme)
-            VALUES (?, ?, ?, ?, ?)
-        ''', ('admin', 'admin@contasmart.com', hashed_password, 'Administrador', 'executive'))
+    try:
+        # Tabela de usuários
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS users (
+                    id SERIAL PRIMARY KEY,
+                    username VARCHAR(100) UNIQUE NOT NULL,
+                    email VARCHAR(255) UNIQUE NOT NULL,
+                    password TEXT NOT NULL,
+                    full_name VARCHAR(255),
+                    avatar VARCHAR(255) DEFAULT 'default.png',
+                    theme VARCHAR(50) DEFAULT 'executive',
+                    currency VARCHAR(10) DEFAULT 'BRL',
+                    language VARCHAR(10) DEFAULT 'pt_BR',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+        else:
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS users (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT UNIQUE NOT NULL,
+                    email TEXT UNIQUE NOT NULL,
+                    password TEXT NOT NULL,
+                    full_name TEXT,
+                    avatar TEXT DEFAULT 'default.png',
+                    theme TEXT DEFAULT 'executive',
+                    currency TEXT DEFAULT 'BRL',
+                    language TEXT DEFAULT 'pt_BR',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
         
-        user_id = conn.lastrowid
+        # Tabela de categorias
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS categories (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL,
+                    name VARCHAR(100) NOT NULL,
+                    type VARCHAR(10) CHECK(type IN ('income', 'expense')) NOT NULL,
+                    color VARCHAR(20) DEFAULT '#0066ff',
+                    icon VARCHAR(50) DEFAULT 'fas fa-tag',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+        else:
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS categories (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    name TEXT NOT NULL,
+                    type TEXT CHECK(type IN ('income', 'expense')) NOT NULL,
+                    color TEXT DEFAULT '#0066ff',
+                    icon TEXT DEFAULT 'fas fa-tag',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
         
-        # Categorias padrão
-        default_categories = [
-            ('Salário', 'income', '#00ff88', 'fas fa-money-check-alt'),
-            ('Freelance', 'income', '#00ffff', 'fas fa-laptop-code'),
-            ('Investimentos', 'income', '#9d00ff', 'fas fa-chart-line'),
-            ('Dividendos', 'income', '#0066ff', 'fas fa-coins'),
-            ('Alimentação', 'expense', '#ff3366', 'fas fa-utensils'),
-            ('Transporte', 'expense', '#ff9900', 'fas fa-car'),
-            ('Moradia', 'expense', '#ff0066', 'fas fa-home'),
-            ('Lazer', 'expense', '#00ccff', 'fas fa-gamepad'),
-            ('Educação', 'expense', '#9966ff', 'fas fa-graduation-cap'),
-            ('Saúde', 'expense', '#ff66cc', 'fas fa-heartbeat'),
-            ('Compras', 'expense', '#ffcc00', 'fas fa-shopping-bag'),
-            ('Serviços', 'expense', '#33ccff', 'fas fa-tools')
-        ]
+        # Tabela de transações
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS transactions (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL,
+                    type VARCHAR(10) CHECK(type IN ('income', 'expense')) NOT NULL,
+                    category_id INTEGER,
+                    amount DECIMAL(10, 2) NOT NULL,
+                    description TEXT,
+                    transaction_date DATE NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+        else:
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS transactions (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    type TEXT CHECK(type IN ('income', 'expense')) NOT NULL,
+                    category_id INTEGER,
+                    amount DECIMAL(10, 2) NOT NULL,
+                    description TEXT,
+                    transaction_date DATE NOT NULL,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (category_id) REFERENCES categories(id)
+                )
+            ''')
         
-        for name, type, color, icon in default_categories:
-            conn.execute('''
-                INSERT INTO categories (user_id, name, type, color, icon)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (user_id, name, type, color, icon))
+        # Tabela de metas
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS goals (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL,
+                    title VARCHAR(255) NOT NULL,
+                    description TEXT,
+                    target_amount DECIMAL(10, 2) NOT NULL,
+                    current_amount DECIMAL(10, 2) DEFAULT 0,
+                    deadline DATE,
+                    priority VARCHAR(10) CHECK(priority IN ('low', 'medium', 'high')),
+                    is_completed BOOLEAN DEFAULT FALSE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+        else:
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS goals (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    title TEXT NOT NULL,
+                    description TEXT,
+                    target_amount DECIMAL(10, 2) NOT NULL,
+                    current_amount DECIMAL(10, 2) DEFAULT 0,
+                    deadline DATE,
+                    priority TEXT CHECK(priority IN ('low', 'medium', 'high')),
+                    is_completed BOOLEAN DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
         
-        # Transações de exemplo
-        import random
-        categories = conn.execute('SELECT id, type FROM categories WHERE user_id = ?', (user_id,)).fetchall()
-        income_cats = [cat['id'] for cat in categories if cat['type'] == 'income']
-        expense_cats = [cat['id'] for cat in categories if cat['type'] == 'expense']
+        # Tabela de alertas
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS alerts (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL,
+                    type VARCHAR(20) NOT NULL,
+                    title VARCHAR(255) NOT NULL,
+                    message TEXT NOT NULL,
+                    icon VARCHAR(50) DEFAULT 'fas fa-bell',
+                    is_read BOOLEAN DEFAULT FALSE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
+        else:
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS alerts (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    type TEXT NOT NULL,
+                    title TEXT NOT NULL,
+                    message TEXT NOT NULL,
+                    icon TEXT DEFAULT 'fas fa-bell',
+                    is_read BOOLEAN DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )
+            ''')
         
-        for i in range(20):
-            if i < 8:  # 8 receitas
-                trans_type = 'income'
-                category_id = random.choice(income_cats) if income_cats else None
-                amount = random.uniform(100, 5000)
-                description = f'Receita {i+1}'
-            else:  # 12 despesas
-                trans_type = 'expense'
-                category_id = random.choice(expense_cats) if expense_cats else None
-                amount = random.uniform(50, 2000)
-                description = f'Despesa {i-7}'
+        conn.commit()
+        
+        # Verificar usuário admin
+        cursor.execute('SELECT * FROM users WHERE username = %s', ('admin',))
+        admin = cursor.fetchone()
+        
+        if not admin:
+            hashed_password = generate_password_hash('admin2026')
             
-            days_ago = random.randint(0, 90)
-            date = (datetime.now() - timedelta(days=days_ago)).strftime('%Y-%m-%d')
+            if DATABASE.startswith('postgresql://'):
+                cursor.execute('''
+                    INSERT INTO users (username, email, password, full_name, theme)
+                    VALUES (%s, %s, %s, %s, %s)
+                    RETURNING id
+                ''', ('admin', 'admin@contasmart.com', hashed_password, 'Administrador', 'executive'))
+                user_id = cursor.fetchone()['id']
+            else:
+                cursor.execute('''
+                    INSERT INTO users (username, email, password, full_name, theme)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', ('admin', 'admin@contasmart.com', hashed_password, 'Administrador', 'executive'))
+                user_id = cursor.lastrowid
             
-            conn.execute('''
-                INSERT INTO transactions (user_id, type, category_id, amount, description, transaction_date)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (user_id, trans_type, category_id, amount, description, date))
+            # Categorias padrão
+            default_categories = [
+                ('Salário', 'income', '#00ff88', 'fas fa-money-check-alt'),
+                ('Freelance', 'income', '#00ffff', 'fas fa-laptop-code'),
+                ('Investimentos', 'income', '#9d00ff', 'fas fa-chart-line'),
+                ('Dividendos', 'income', '#0066ff', 'fas fa-coins'),
+                ('Alimentação', 'expense', '#ff3366', 'fas fa-utensils'),
+                ('Transporte', 'expense', '#ff9900', 'fas fa-car'),
+                ('Moradia', 'expense', '#ff0066', 'fas fa-home'),
+                ('Lazer', 'expense', '#00ccff', 'fas fa-gamepad'),
+                ('Educação', 'expense', '#9966ff', 'fas fa-graduation-cap'),
+                ('Saúde', 'expense', '#ff66cc', 'fas fa-heartbeat'),
+                ('Compras', 'expense', '#ffcc00', 'fas fa-shopping-bag'),
+                ('Serviços', 'expense', '#33ccff', 'fas fa-tools')
+            ]
+            
+            for name, type, color, icon in default_categories:
+                cursor.execute('''
+                    INSERT INTO categories (user_id, name, type, color, icon)
+                    VALUES (%s, %s, %s, %s, %s)
+                ''' if DATABASE.startswith('postgresql://') else '''
+                    INSERT INTO categories (user_id, name, type, color, icon)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (user_id, name, type, color, icon))
+            
+            # Transações de exemplo
+            import random
+            cursor.execute('SELECT id, type FROM categories WHERE user_id = %s', (user_id,))
+            categories = cursor.fetchall()
+            income_cats = [cat['id'] for cat in categories if cat['type'] == 'income']
+            expense_cats = [cat['id'] for cat in categories if cat['type'] == 'expense']
+            
+            for i in range(20):
+                if i < 8:  # 8 receitas
+                    trans_type = 'income'
+                    category_id = random.choice(income_cats) if income_cats else None
+                    amount = round(random.uniform(100, 5000), 2)
+                    description = f'Receita {i+1}'
+                else:  # 12 despesas
+                    trans_type = 'expense'
+                    category_id = random.choice(expense_cats) if expense_cats else None
+                    amount = round(random.uniform(50, 2000), 2)
+                    description = f'Despesa {i-7}'
+                
+                days_ago = random.randint(0, 90)
+                date = (datetime.now() - timedelta(days=days_ago)).strftime('%Y-%m-%d')
+                
+                cursor.execute('''
+                    INSERT INTO transactions (user_id, type, category_id, amount, description, transaction_date)
+                    VALUES (%s, %s, %s, %s, %s, %s)
+                ''' if DATABASE.startswith('postgresql://') else '''
+                    INSERT INTO transactions (user_id, type, category_id, amount, description, transaction_date)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                ''', (user_id, trans_type, category_id, amount, description, date))
+            
+            # Metas de exemplo
+            example_goals = [
+                ('Reserva de Emergência', 'Economizar para imprevistos', 10000, 4500, '2024-12-31', 'high'),
+                ('Viagem Internacional', 'Conhecer a Europa', 20000, 8000, '2024-10-15', 'medium'),
+                ('Novo Notebook', 'Para trabalho e estudos', 6000, 3200, '2024-08-30', 'medium'),
+                ('Investimentos', 'Aumentar patrimônio', 50000, 18500, '2025-12-31', 'high'),
+                ('Curso Especialização', 'Pós-graduação em finanças', 12000, 6000, '2024-11-20', 'low')
+            ]
+            
+            for title, desc, target, current, deadline, priority in example_goals:
+                cursor.execute('''
+                    INSERT INTO goals (user_id, title, description, target_amount, current_amount, deadline, priority)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                ''' if DATABASE.startswith('postgresql://') else '''
+                    INSERT INTO goals (user_id, title, description, target_amount, current_amount, deadline, priority)
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                ''', (user_id, title, desc, target, current, deadline, priority))
+            
+            conn.commit()
         
-        # Metas de exemplo
-        example_goals = [
-            ('Reserva de Emergência', 'Economizar para imprevistos', 10000, 4500, '2024-12-31', 'high'),
-            ('Viagem Internacional', 'Conhecer a Europa', 20000, 8000, '2024-10-15', 'medium'),
-            ('Novo Notebook', 'Para trabalho e estudos', 6000, 3200, '2024-08-30', 'medium'),
-            ('Investimentos', 'Aumentar patrimônio', 50000, 18500, '2025-12-31', 'high'),
-            ('Curso Especialização', 'Pós-graduação em finanças', 12000, 6000, '2024-11-20', 'low')
-        ]
+        print("✅ Banco de dados executivo inicializado!")
         
-        for title, desc, target, current, deadline, priority in example_goals:
-            conn.execute('''
-                INSERT INTO goals (user_id, title, description, target_amount, current_amount, deadline, priority)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            ''', (user_id, title, desc, target, current, deadline, priority))
-    
-    conn.commit()
-    conn.close()
-    print("✅ Banco de dados executivo inicializado!")
+    except Exception as e:
+        print(f"❌ Erro ao inicializar banco: {str(e)}")
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 def login_required(f):
     """Decorator para exigir login"""
@@ -239,8 +373,16 @@ def login():
             return render_template('login_executivo.html')
         
         conn = get_db_connection()
-        user = conn.execute('SELECT * FROM users WHERE username = ? OR email = ?', 
-                           (username, username)).fetchone()
+        cursor = conn.cursor()
+        
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('SELECT * FROM users WHERE username = %s OR email = %s', 
+                          (username, username))
+        else:
+            cursor.execute('SELECT * FROM users WHERE username = ? OR email = ?', 
+                          (username, username))
+        
+        user = cursor.fetchone()
         conn.close()
         
         if user and check_password_hash(user['password'], password):
@@ -285,36 +427,49 @@ def register():
         hashed_password = generate_password_hash(password)
         
         conn = get_db_connection()
+        cursor = conn.cursor()
+        
         try:
-            conn.execute('''
-                INSERT INTO users (username, email, password, full_name, theme)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (username, email, hashed_password, full_name, 'executive'))
+            if DATABASE.startswith('postgresql://'):
+                cursor.execute('''
+                    INSERT INTO users (username, email, password, full_name, theme)
+                    VALUES (%s, %s, %s, %s, %s)
+                    RETURNING id
+                ''', (username, email, hashed_password, full_name, 'executive'))
+                new_user_id = cursor.fetchone()['id']
+            else:
+                cursor.execute('''
+                    INSERT INTO users (username, email, password, full_name, theme)
+                    VALUES (?, ?, ?, ?, ?)
+                ''', (username, email, hashed_password, full_name, 'executive'))
+                new_user_id = cursor.lastrowid
+            
             conn.commit()
             
-            # Obter ID do novo usuário
-            new_user_id = conn.lastrowid
-            
             # Copiar categorias padrão do admin (ID 1)
-            default_categories = conn.execute('SELECT * FROM categories WHERE user_id = 1').fetchall()
+            cursor.execute('SELECT * FROM categories WHERE user_id = 1')
+            default_categories = cursor.fetchall()
             
             for cat in default_categories:
-                conn.execute('''
+                cursor.execute('''
+                    INSERT INTO categories (user_id, name, type, color, icon)
+                    VALUES (%s, %s, %s, %s, %s)
+                ''' if DATABASE.startswith('postgresql://') else '''
                     INSERT INTO categories (user_id, name, type, color, icon)
                     VALUES (?, ?, ?, ?, ?)
                 ''', (new_user_id, cat['name'], cat['type'], cat['color'], cat['icon']))
             
             conn.commit()
-            conn.close()
             
             flash('Conta criada com sucesso! Faça login para acessar o sistema.', 'success')
             return redirect(url_for('login'))
             
-        except sqlite3.IntegrityError as e:
-            flash('Usuário ou email já cadastrados.', 'danger')
-            conn.close()
         except Exception as e:
-            flash(f'Erro ao criar conta: {str(e)}', 'danger')
+            if 'unique' in str(e).lower():
+                flash('Usuário ou email já cadastrados.', 'danger')
+            else:
+                flash(f'Erro ao criar conta: {str(e)}', 'danger')
+        finally:
             conn.close()
     
     return render_template('register_executivo.html')
@@ -326,19 +481,32 @@ def dashboard():
     try:
         user_id = session['user_id']
         conn = get_db_connection()
+        cursor = conn.cursor()
         
         # Estatísticas principais
         stats = get_dashboard_stats(user_id, conn)
         
         # Transações recentes
-        recent_transactions = conn.execute('''
-            SELECT t.*, c.name as category_name, c.color as category_color, c.icon as category_icon
-            FROM transactions t
-            LEFT JOIN categories c ON t.category_id = c.id
-            WHERE t.user_id = ?
-            ORDER BY t.transaction_date DESC, t.created_at DESC
-            LIMIT 10
-        ''', (user_id,)).fetchall()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT t.*, c.name as category_name, c.color as category_color, c.icon as category_icon
+                FROM transactions t
+                LEFT JOIN categories c ON t.category_id = c.id
+                WHERE t.user_id = %s
+                ORDER BY t.transaction_date DESC, t.created_at DESC
+                LIMIT 10
+            ''', (user_id,))
+        else:
+            cursor.execute('''
+                SELECT t.*, c.name as category_name, c.color as category_color, c.icon as category_icon
+                FROM transactions t
+                LEFT JOIN categories c ON t.category_id = c.id
+                WHERE t.user_id = ?
+                ORDER BY t.transaction_date DESC, t.created_at DESC
+                LIMIT 10
+            ''', (user_id,))
+        
+        recent_transactions = cursor.fetchall()
         
         # Converter para dicionário para serialização
         recent_transactions_list = []
@@ -346,21 +514,36 @@ def dashboard():
             recent_transactions_list.append(dict(trans))
         
         # Metas em destaque
-        featured_goals = conn.execute('''
-            SELECT * FROM goals 
-            WHERE user_id = ? AND is_completed = 0
-            ORDER BY 
-                CASE priority 
-                    WHEN 'high' THEN 1
-                    WHEN 'medium' THEN 2
-                    WHEN 'low' THEN 3
-                    ELSE 4
-                END,
-                deadline ASC
-            LIMIT 5
-        ''', (user_id,)).fetchall()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT * FROM goals 
+                WHERE user_id = %s AND is_completed = FALSE
+                ORDER BY 
+                    CASE priority 
+                        WHEN 'high' THEN 1
+                        WHEN 'medium' THEN 2
+                        WHEN 'low' THEN 3
+                        ELSE 4
+                    END,
+                    deadline ASC
+                LIMIT 5
+            ''', (user_id,))
+        else:
+            cursor.execute('''
+                SELECT * FROM goals 
+                WHERE user_id = ? AND is_completed = 0
+                ORDER BY 
+                    CASE priority 
+                        WHEN 'high' THEN 1
+                        WHEN 'medium' THEN 2
+                        WHEN 'low' THEN 3
+                        ELSE 4
+                    END,
+                    deadline ASC
+                LIMIT 5
+            ''', (user_id,))
         
-        # Converter para dicionário
+        featured_goals = cursor.fetchall()
         goals_list = [dict(goal) for goal in featured_goals]
         
         # Gráfico de tendências (últimos 6 meses)
@@ -393,51 +576,103 @@ def dashboard():
 def get_dashboard_stats(user_id, conn):
     """Obter estatísticas do dashboard"""
     try:
+        cursor = conn.cursor()
+        
         # Totais gerais
-        total_income_result = conn.execute('''
-            SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-            WHERE user_id = ? AND type = 'income'
-        ''', (user_id,)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = %s AND type = 'income'
+            ''', (user_id,))
+        else:
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = ? AND type = 'income'
+            ''', (user_id,))
+        
+        total_income_result = cursor.fetchone()
         total_income = float(total_income_result['total']) if total_income_result else 0
         
-        total_expense_result = conn.execute('''
-            SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-            WHERE user_id = ? AND type = 'expense'
-        ''', (user_id,)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = %s AND type = 'expense'
+            ''', (user_id,))
+        else:
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = ? AND type = 'expense'
+            ''', (user_id,))
+        
+        total_expense_result = cursor.fetchone()
         total_expense = float(total_expense_result['total']) if total_expense_result else 0
         
         balance = total_income - total_expense
         
         # Este mês
         current_month = datetime.now().strftime('%Y-%m')
-        month_income_result = conn.execute('''
-            SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-            WHERE user_id = ? AND type = 'income' 
-            AND strftime('%Y-%m', transaction_date) = ?
-        ''', (user_id, current_month)).fetchone()
+        
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = %s AND type = 'income' 
+                AND TO_CHAR(transaction_date, 'YYYY-MM') = %s
+            ''', (user_id, current_month))
+        else:
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = ? AND type = 'income' 
+                AND strftime('%Y-%m', transaction_date) = ?
+            ''', (user_id, current_month))
+        
+        month_income_result = cursor.fetchone()
         month_income = float(month_income_result['total']) if month_income_result else 0
         
-        month_expense_result = conn.execute('''
-            SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-            WHERE user_id = ? AND type = 'expense'
-            AND strftime('%Y-%m', transaction_date) = ?
-        ''', (user_id, current_month)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = %s AND type = 'expense'
+                AND TO_CHAR(transaction_date, 'YYYY-MM') = %s
+            ''', (user_id, current_month))
+        else:
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = ? AND type = 'expense'
+                AND strftime('%Y-%m', transaction_date) = ?
+            ''', (user_id, current_month))
+        
+        month_expense_result = cursor.fetchone()
         month_expense = float(month_expense_result['total']) if month_expense_result else 0
         
         month_balance = month_income - month_expense
         
         # Progresso de metas
-        goals_progress = conn.execute('''
-            SELECT 
-                COUNT(*) as total,
-                SUM(CASE WHEN current_amount >= target_amount THEN 1 ELSE 0 END) as completed,
-                AVG(CASE 
-                    WHEN target_amount > 0 THEN (current_amount * 100.0) / target_amount 
-                    ELSE 0 
-                END) as avg_progress
-            FROM goals 
-            WHERE user_id = ? AND is_completed = 0
-        ''', (user_id,)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN current_amount >= target_amount THEN 1 ELSE 0 END) as completed,
+                    AVG(CASE 
+                        WHEN target_amount > 0 THEN (current_amount * 100.0) / target_amount 
+                        ELSE 0 
+                    END) as avg_progress
+                FROM goals 
+                WHERE user_id = %s AND is_completed = FALSE
+            ''', (user_id,))
+        else:
+            cursor.execute('''
+                SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN current_amount >= target_amount THEN 1 ELSE 0 END) as completed,
+                    AVG(CASE 
+                        WHEN target_amount > 0 THEN (current_amount * 100.0) / target_amount 
+                        ELSE 0 
+                    END) as avg_progress
+                FROM goals 
+                WHERE user_id = ? AND is_completed = 0
+            ''', (user_id,))
+        
+        goals_progress = cursor.fetchone()
         
         return {
             'total_income': total_income,
@@ -469,23 +704,43 @@ def get_trend_data(user_id, conn):
     trend_data = []
     
     try:
+        cursor = conn.cursor()
+        
         for i in range(5, -1, -1):  # Últimos 6 meses
             date = datetime.now() - timedelta(days=30*i)
             month_year = date.strftime('%Y-%m')
             month_name = date.strftime('%b')
             
-            income_result = conn.execute('''
-                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-                WHERE user_id = ? AND type = 'income'
-                AND strftime('%Y-%m', transaction_date) = ?
-            ''', (user_id, month_year)).fetchone()
+            if DATABASE.startswith('postgresql://'):
+                cursor.execute('''
+                    SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                    WHERE user_id = %s AND type = 'income'
+                    AND TO_CHAR(transaction_date, 'YYYY-MM') = %s
+                ''', (user_id, month_year))
+            else:
+                cursor.execute('''
+                    SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                    WHERE user_id = ? AND type = 'income'
+                    AND strftime('%Y-%m', transaction_date) = ?
+                ''', (user_id, month_year))
+            
+            income_result = cursor.fetchone()
             income = float(income_result['total']) if income_result else 0
             
-            expense_result = conn.execute('''
-                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-                WHERE user_id = ? AND type = 'expense'
-                AND strftime('%Y-%m', transaction_date) = ?
-            ''', (user_id, month_year)).fetchone()
+            if DATABASE.startswith('postgresql://'):
+                cursor.execute('''
+                    SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                    WHERE user_id = %s AND type = 'expense'
+                    AND TO_CHAR(transaction_date, 'YYYY-MM') = %s
+                ''', (user_id, month_year))
+            else:
+                cursor.execute('''
+                    SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                    WHERE user_id = ? AND type = 'expense'
+                    AND strftime('%Y-%m', transaction_date) = ?
+                ''', (user_id, month_year))
+            
+            expense_result = cursor.fetchone()
             expense = float(expense_result['total']) if expense_result else 0
             
             trend_data.append({
@@ -513,6 +768,8 @@ def get_system_alerts(user_id, conn):
     alerts = []
     
     try:
+        cursor = conn.cursor()
+        
         # Verificar saldo negativo
         stats = get_dashboard_stats(user_id, conn)
         if stats['balance'] < 0:
@@ -525,11 +782,20 @@ def get_system_alerts(user_id, conn):
             })
         
         # Verificar metas próximas do prazo
-        due_goals = conn.execute('''
-            SELECT COUNT(*) as count FROM goals 
-            WHERE user_id = ? AND is_completed = 0 
-            AND deadline <= date("now", "+7 days")
-        ''', (user_id,)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT COUNT(*) as count FROM goals 
+                WHERE user_id = %s AND is_completed = FALSE 
+                AND deadline <= CURRENT_DATE + INTERVAL '7 days'
+            ''', (user_id,))
+        else:
+            cursor.execute('''
+                SELECT COUNT(*) as count FROM goals 
+                WHERE user_id = ? AND is_completed = 0 
+                AND deadline <= date("now", "+7 days")
+            ''', (user_id,))
+        
+        due_goals = cursor.fetchone()
         
         if due_goals and due_goals['count'] > 0:
             alerts.append({
@@ -587,40 +853,70 @@ def transactions():
         filter_search = request.args.get('search', '')
         
         conn = get_db_connection()
+        cursor = conn.cursor()
         
         # Construir query base
-        query = '''
-            SELECT 
-                t.id, t.user_id, t.type, t.category_id, 
-                t.amount, t.description, t.transaction_date, t.created_at,
-                c.name as category_name, 
-                c.color as category_color, 
-                c.icon as category_icon
-            FROM transactions t
-            LEFT JOIN categories c ON t.category_id = c.id
-            WHERE t.user_id = ?
-        '''
+        if DATABASE.startswith('postgresql://'):
+            query = '''
+                SELECT 
+                    t.id, t.user_id, t.type, t.category_id, 
+                    t.amount, t.description, t.transaction_date, t.created_at,
+                    c.name as category_name, 
+                    c.color as category_color, 
+                    c.icon as category_icon
+                FROM transactions t
+                LEFT JOIN categories c ON t.category_id = c.id
+                WHERE t.user_id = %s
+            '''
+        else:
+            query = '''
+                SELECT 
+                    t.id, t.user_id, t.type, t.category_id, 
+                    t.amount, t.description, t.transaction_date, t.created_at,
+                    c.name as category_name, 
+                    c.color as category_color, 
+                    c.icon as category_icon
+                FROM transactions t
+                LEFT JOIN categories c ON t.category_id = c.id
+                WHERE t.user_id = ?
+            '''
+        
         params = [user_id]
         
         # Aplicar filtros
         if filter_type != 'all':
-            query += ' AND t.type = ?'
+            query += ' AND t.type = '
+            query += '%s' if DATABASE.startswith('postgresql://') else '?'
             params.append(filter_type)
         
         if filter_category != 'all' and filter_category.isdigit():
-            query += ' AND t.category_id = ?'
+            query += ' AND t.category_id = '
+            query += '%s' if DATABASE.startswith('postgresql://') else '?'
             params.append(int(filter_category))
         
         if filter_date != 'all':
             if filter_date == 'today':
-                query += ' AND date(t.transaction_date) = date("now")'
+                if DATABASE.startswith('postgresql://'):
+                    query += " AND t.transaction_date = CURRENT_DATE"
+                else:
+                    query += ' AND date(t.transaction_date) = date("now")'
             elif filter_date == 'week':
-                query += ' AND t.transaction_date >= date("now", "-7 days")'
+                if DATABASE.startswith('postgresql://'):
+                    query += " AND t.transaction_date >= CURRENT_DATE - INTERVAL '7 days'"
+                else:
+                    query += ' AND t.transaction_date >= date("now", "-7 days")'
             elif filter_date == 'month':
-                query += ' AND strftime("%Y-%m", t.transaction_date) = strftime("%Y-%m", "now")'
+                if DATABASE.startswith('postgresql://'):
+                    query += " AND TO_CHAR(t.transaction_date, 'YYYY-MM') = TO_CHAR(CURRENT_DATE, 'YYYY-MM')"
+                else:
+                    query += ' AND strftime("%Y-%m", t.transaction_date) = strftime("%Y-%m", "now")'
         
         if filter_search and filter_search.strip():
-            query += ' AND (t.description LIKE ? OR c.name LIKE ?)'
+            query += ' AND (t.description LIKE '
+            query += '%s' if DATABASE.startswith('postgresql://') else '?'
+            query += ' OR c.name LIKE '
+            query += '%s' if DATABASE.startswith('postgresql://') else '?'
+            query += ')'
             search_term = f'%{filter_search.strip()}%'
             params.extend([search_term, search_term])
         
@@ -630,7 +926,8 @@ def transactions():
         print(f"DEBUG: Params: {params}")
         
         # Executar query
-        transactions_list = conn.execute(query, params).fetchall()
+        cursor.execute(query, params)
+        transactions_list = cursor.fetchall()
         
         # Converter para lista de dicionários
         transactions_dict = []
@@ -641,32 +938,49 @@ def transactions():
             transactions_dict.append(trans_dict)
         
         # Totais filtrados
-        income_query = 'SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = ? AND type = "income"'
-        expense_query = 'SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = ? AND type = "expense"'
+        if DATABASE.startswith('postgresql://'):
+            income_query = "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = %s AND type = 'income'"
+            expense_query = "SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = %s AND type = 'expense'"
+        else:
+            income_query = 'SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = ? AND type = "income"'
+            expense_query = 'SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = ? AND type = "expense"'
         
-        income_total_result = conn.execute(income_query, (user_id,)).fetchone()
-        expense_total_result = conn.execute(expense_query, (user_id,)).fetchone()
+        cursor.execute(income_query, (user_id,))
+        income_total_result = cursor.fetchone()
+        cursor.execute(expense_query, (user_id,))
+        expense_total_result = cursor.fetchone()
         
         income_total = float(income_total_result['total']) if income_total_result and income_total_result['total'] else 0.0
         expense_total = float(expense_total_result['total']) if expense_total_result and expense_total_result['total'] else 0.0
         
         # Categorias para filtro
-        categories = conn.execute('''
-            SELECT * FROM categories 
-            WHERE user_id = ? 
-            ORDER BY 
-                CASE type 
-                    WHEN 'income' THEN 1 
-                    WHEN 'expense' THEN 2 
-                    ELSE 3 
-                END, 
-                name
-        ''', (user_id,)).fetchall()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT * FROM categories 
+                WHERE user_id = %s 
+                ORDER BY 
+                    CASE type 
+                        WHEN 'income' THEN 1 
+                        WHEN 'expense' THEN 2 
+                        ELSE 3 
+                    END, 
+                    name
+            ''', (user_id,))
+        else:
+            cursor.execute('''
+                SELECT * FROM categories 
+                WHERE user_id = ? 
+                ORDER BY 
+                    CASE type 
+                        WHEN 'income' THEN 1 
+                        WHEN 'expense' THEN 2 
+                        ELSE 3 
+                    END, 
+                    name
+            ''', (user_id,))
         
-        categories_dict = []
-        for cat in categories:
-            cat_dict = dict(cat)
-            categories_dict.append(cat_dict)
+        categories = cursor.fetchall()
+        categories_dict = [dict(cat) for cat in categories]
         
         conn.close()
         
@@ -719,10 +1033,19 @@ def add_transaction():
             return jsonify({'success': False, 'error': 'Dados inválidos'})
         
         conn = get_db_connection()
-        conn.execute('''
-            INSERT INTO transactions (user_id, type, category_id, amount, description, transaction_date)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (user_id, trans_type, category_id, amount, description, transaction_date))
+        cursor = conn.cursor()
+        
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                INSERT INTO transactions (user_id, type, category_id, amount, description, transaction_date)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            ''', (user_id, trans_type, category_id, amount, description, transaction_date))
+        else:
+            cursor.execute('''
+                INSERT INTO transactions (user_id, type, category_id, amount, description, transaction_date)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (user_id, trans_type, category_id, amount, description, transaction_date))
+        
         conn.commit()
         conn.close()
         
@@ -739,9 +1062,15 @@ def delete_transaction(transaction_id):
     
     try:
         conn = get_db_connection()
-        conn.execute('''
-            DELETE FROM transactions WHERE id = ? AND user_id = ?
-        ''', (transaction_id, user_id))
+        cursor = conn.cursor()
+        
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('DELETE FROM transactions WHERE id = %s AND user_id = %s', 
+                          (transaction_id, user_id))
+        else:
+            cursor.execute('DELETE FROM transactions WHERE id = ? AND user_id = ?', 
+                          (transaction_id, user_id))
+        
         conn.commit()
         conn.close()
         
@@ -763,6 +1092,7 @@ def analytics():
         month = request.args.get('month', datetime.now().month)
         
         conn = get_db_connection()
+        cursor = conn.cursor()
         
         # Análise por categoria
         category_analysis = get_category_analysis(user_id, period, conn)
@@ -801,29 +1131,59 @@ def analytics():
 def get_category_analysis(user_id, period, conn):
     """Análise por categoria"""
     try:
+        cursor = conn.cursor()
+        
         # Despesas por categoria
-        expense_categories = conn.execute('''
-            SELECT c.name, c.color, c.icon, SUM(t.amount) as total,
-                   COUNT(t.id) as count, AVG(t.amount) as average
-            FROM transactions t
-            JOIN categories c ON t.category_id = c.id
-            WHERE t.user_id = ? AND t.type = 'expense'
-            GROUP BY c.id
-            ORDER BY total DESC
-            LIMIT 8
-        ''', (user_id,)).fetchall()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT c.name, c.color, c.icon, SUM(t.amount) as total,
+                       COUNT(t.id) as count, AVG(t.amount) as average
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE t.user_id = %s AND t.type = 'expense'
+                GROUP BY c.id, c.name, c.color, c.icon
+                ORDER BY total DESC
+                LIMIT 8
+            ''', (user_id,))
+        else:
+            cursor.execute('''
+                SELECT c.name, c.color, c.icon, SUM(t.amount) as total,
+                       COUNT(t.id) as count, AVG(t.amount) as average
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE t.user_id = ? AND t.type = 'expense'
+                GROUP BY c.id
+                ORDER BY total DESC
+                LIMIT 8
+            ''', (user_id,))
+        
+        expense_categories = cursor.fetchall()
         
         # Receitas por categoria
-        income_categories = conn.execute('''
-            SELECT c.name, c.color, c.icon, SUM(t.amount) as total,
-                   COUNT(t.id) as count
-            FROM transactions t
-            JOIN categories c ON t.category_id = c.id
-            WHERE t.user_id = ? AND t.type = 'income'
-            GROUP BY c.id
-            ORDER BY total DESC
-            LIMIT 8
-        ''', (user_id,)).fetchall()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT c.name, c.color, c.icon, SUM(t.amount) as total,
+                       COUNT(t.id) as count
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE t.user_id = %s AND t.type = 'income'
+                GROUP BY c.id, c.name, c.color, c.icon
+                ORDER BY total DESC
+                LIMIT 8
+            ''', (user_id,))
+        else:
+            cursor.execute('''
+                SELECT c.name, c.color, c.icon, SUM(t.amount) as total,
+                       COUNT(t.id) as count
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE t.user_id = ? AND t.type = 'income'
+                GROUP BY c.id
+                ORDER BY total DESC
+                LIMIT 8
+            ''', (user_id,))
+        
+        income_categories = cursor.fetchall()
         
         return {
             'expenses': [dict(cat) for cat in expense_categories],
@@ -841,6 +1201,8 @@ def get_financial_trends(user_id, period, conn):
     trends = []
     
     try:
+        cursor = conn.cursor()
+        
         if period == 'year':
             # Últimos 12 meses
             for i in range(11, -1, -1):
@@ -848,18 +1210,36 @@ def get_financial_trends(user_id, period, conn):
                 month_year = date.strftime('%Y-%m')
                 month_name = date.strftime('%b/%y')
                 
-                income_result = conn.execute('''
-                    SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-                    WHERE user_id = ? AND type = 'income'
-                    AND strftime('%Y-%m', transaction_date) = ?
-                ''', (user_id, month_year)).fetchone()
+                if DATABASE.startswith('postgresql://'):
+                    cursor.execute('''
+                        SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                        WHERE user_id = %s AND type = 'income'
+                        AND TO_CHAR(transaction_date, 'YYYY-MM') = %s
+                    ''', (user_id, month_year))
+                else:
+                    cursor.execute('''
+                        SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                        WHERE user_id = ? AND type = 'income'
+                        AND strftime('%Y-%m', transaction_date) = ?
+                    ''', (user_id, month_year))
+                
+                income_result = cursor.fetchone()
                 income = float(income_result['total']) if income_result else 0
                 
-                expense_result = conn.execute('''
-                    SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-                    WHERE user_id = ? AND type = 'expense'
-                    AND strftime('%Y-%m', transaction_date) = ?
-                ''', (user_id, month_year)).fetchone()
+                if DATABASE.startswith('postgresql://'):
+                    cursor.execute('''
+                        SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                        WHERE user_id = %s AND type = 'expense'
+                        AND TO_CHAR(transaction_date, 'YYYY-MM') = %s
+                    ''', (user_id, month_year))
+                else:
+                    cursor.execute('''
+                        SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                        WHERE user_id = ? AND type = 'expense'
+                        AND strftime('%Y-%m', transaction_date) = ?
+                    ''', (user_id, month_year))
+                
+                expense_result = cursor.fetchone()
                 expense = float(expense_result['total']) if expense_result else 0
                 
                 trends.append({
@@ -875,18 +1255,36 @@ def get_financial_trends(user_id, period, conn):
                 month_year = date.strftime('%Y-%m')
                 month_name = date.strftime('%b')
                 
-                income_result = conn.execute('''
-                    SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-                    WHERE user_id = ? AND type = 'income'
-                    AND strftime('%Y-%m', transaction_date) = ?
-                ''', (user_id, month_year)).fetchone()
+                if DATABASE.startswith('postgresql://'):
+                    cursor.execute('''
+                        SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                        WHERE user_id = %s AND type = 'income'
+                        AND TO_CHAR(transaction_date, 'YYYY-MM') = %s
+                    ''', (user_id, month_year))
+                else:
+                    cursor.execute('''
+                        SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                        WHERE user_id = ? AND type = 'income'
+                        AND strftime('%Y-%m', transaction_date) = ?
+                    ''', (user_id, month_year))
+                
+                income_result = cursor.fetchone()
                 income = float(income_result['total']) if income_result else 0
                 
-                expense_result = conn.execute('''
-                    SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-                    WHERE user_id = ? AND type = 'expense'
-                    AND strftime('%Y-%m', transaction_date) = ?
-                ''', (user_id, month_year)).fetchone()
+                if DATABASE.startswith('postgresql://'):
+                    cursor.execute('''
+                        SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                        WHERE user_id = %s AND type = 'expense'
+                        AND TO_CHAR(transaction_date, 'YYYY-MM') = %s
+                    ''', (user_id, month_year))
+                else:
+                    cursor.execute('''
+                        SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                        WHERE user_id = ? AND type = 'expense'
+                        AND strftime('%Y-%m', transaction_date) = ?
+                    ''', (user_id, month_year))
+                
+                expense_result = cursor.fetchone()
                 expense = float(expense_result['total']) if expense_result else 0
                 
                 trends.append({
@@ -905,40 +1303,78 @@ def get_comparative_analysis(user_id, period, conn):
     comparisons = []
     
     try:
+        cursor = conn.cursor()
+        
         # Comparativo mês atual vs anterior
         current_month = datetime.now().strftime('%Y-%m')
         prev_month = (datetime.now() - timedelta(days=30)).strftime('%Y-%m')
         
         # Receitas
-        current_income_result = conn.execute('''
-            SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-            WHERE user_id = ? AND type = 'income'
-            AND strftime('%Y-%m', transaction_date) = ?
-        ''', (user_id, current_month)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = %s AND type = 'income'
+                AND TO_CHAR(transaction_date, 'YYYY-MM') = %s
+            ''', (user_id, current_month))
+        else:
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = ? AND type = 'income'
+                AND strftime('%Y-%m', transaction_date) = ?
+            ''', (user_id, current_month))
+        
+        current_income_result = cursor.fetchone()
         current_income = float(current_income_result['total']) if current_income_result else 0
         
-        prev_income_result = conn.execute('''
-            SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-            WHERE user_id = ? AND type = 'income'
-            AND strftime('%Y-%m', transaction_date) = ?
-        ''', (user_id, prev_month)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = %s AND type = 'income'
+                AND TO_CHAR(transaction_date, 'YYYY-MM') = %s
+            ''', (user_id, prev_month))
+        else:
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = ? AND type = 'income'
+                AND strftime('%Y-%m', transaction_date) = ?
+            ''', (user_id, prev_month))
+        
+        prev_income_result = cursor.fetchone()
         prev_income = float(prev_income_result['total']) if prev_income_result else 0
         
         income_change = calculate_percentage_change(current_income, prev_income)
         
         # Despesas
-        current_expense_result = conn.execute('''
-            SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-            WHERE user_id = ? AND type = 'expense'
-            AND strftime('%Y-%m', transaction_date) = ?
-        ''', (user_id, current_month)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = %s AND type = 'expense'
+                AND TO_CHAR(transaction_date, 'YYYY-MM') = %s
+            ''', (user_id, current_month))
+        else:
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = ? AND type = 'expense'
+                AND strftime('%Y-%m', transaction_date) = ?
+            ''', (user_id, current_month))
+        
+        current_expense_result = cursor.fetchone()
         current_expense = float(current_expense_result['total']) if current_expense_result else 0
         
-        prev_expense_result = conn.execute('''
-            SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-            WHERE user_id = ? AND type = 'expense'
-            AND strftime('%Y-%m', transaction_date) = ?
-        ''', (user_id, prev_month)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = %s AND type = 'expense'
+                AND TO_CHAR(transaction_date, 'YYYY-MM') = %s
+            ''', (user_id, prev_month))
+        else:
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = ? AND type = 'expense'
+                AND strftime('%Y-%m', transaction_date) = ?
+            ''', (user_id, prev_month))
+        
+        prev_expense_result = cursor.fetchone()
         prev_expense = float(prev_expense_result['total']) if prev_expense_result else 0
         
         expense_change = calculate_percentage_change(current_expense, prev_expense)
@@ -977,21 +1413,41 @@ def generate_financial_insights(user_id, conn):
     insights = []
     
     try:
+        cursor = conn.cursor()
+        
         # Obter dados do mês
         current_month = datetime.now().strftime('%Y-%m')
         
-        month_income_result = conn.execute('''
-            SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-            WHERE user_id = ? AND type = 'income'
-            AND strftime('%Y-%m', transaction_date) = ?
-        ''', (user_id, current_month)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = %s AND type = 'income'
+                AND TO_CHAR(transaction_date, 'YYYY-MM') = %s
+            ''', (user_id, current_month))
+        else:
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = ? AND type = 'income'
+                AND strftime('%Y-%m', transaction_date) = ?
+            ''', (user_id, current_month))
+        
+        month_income_result = cursor.fetchone()
         month_income = float(month_income_result['total']) if month_income_result else 0
         
-        month_expense_result = conn.execute('''
-            SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-            WHERE user_id = ? AND type = 'expense'
-            AND strftime('%Y-%m', transaction_date) = ?
-        ''', (user_id, current_month)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = %s AND type = 'expense'
+                AND TO_CHAR(transaction_date, 'YYYY-MM') = %s
+            ''', (user_id, current_month))
+        else:
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = ? AND type = 'expense'
+                AND strftime('%Y-%m', transaction_date) = ?
+            ''', (user_id, current_month))
+        
+        month_expense_result = cursor.fetchone()
         month_expense = float(month_expense_result['total']) if month_expense_result else 0
         
         # Insight 1: Taxa de poupança
@@ -1013,16 +1469,30 @@ def generate_financial_insights(user_id, conn):
                 })
         
         # Insight 2: Maior despesa
-        top_expense = conn.execute('''
-            SELECT c.name, SUM(t.amount) as total
-            FROM transactions t
-            JOIN categories c ON t.category_id = c.id
-            WHERE t.user_id = ? AND t.type = 'expense'
-            AND strftime('%Y-%m', t.transaction_date) = ?
-            GROUP BY c.id
-            ORDER BY total DESC
-            LIMIT 1
-        ''', (user_id, current_month)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT c.name, SUM(t.amount) as total
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE t.user_id = %s AND t.type = 'expense'
+                AND TO_CHAR(t.transaction_date, 'YYYY-MM') = %s
+                GROUP BY c.id, c.name
+                ORDER BY total DESC
+                LIMIT 1
+            ''', (user_id, current_month))
+        else:
+            cursor.execute('''
+                SELECT c.name, SUM(t.amount) as total
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE t.user_id = ? AND t.type = 'expense'
+                AND strftime('%Y-%m', t.transaction_date) = ?
+                GROUP BY c.id
+                ORDER BY total DESC
+                LIMIT 1
+            ''', (user_id, current_month))
+        
+        top_expense = cursor.fetchone()
         
         if top_expense and month_expense > 0:
             expense_percentage = (top_expense['total'] / month_expense) * 100
@@ -1035,14 +1505,26 @@ def generate_financial_insights(user_id, conn):
                 })
         
         # Insight 3: Metas próximas
-        near_goals = conn.execute('''
-            SELECT title, target_amount, current_amount, deadline
-            FROM goals 
-            WHERE user_id = ? AND is_completed = 0 
-            AND deadline <= date("now", "+30 days")
-            ORDER BY deadline
-            LIMIT 2
-        ''', (user_id,)).fetchall()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT title, target_amount, current_amount, deadline
+                FROM goals 
+                WHERE user_id = %s AND is_completed = FALSE 
+                AND deadline <= CURRENT_DATE + INTERVAL '30 days'
+                ORDER BY deadline
+                LIMIT 2
+            ''', (user_id,))
+        else:
+            cursor.execute('''
+                SELECT title, target_amount, current_amount, deadline
+                FROM goals 
+                WHERE user_id = ? AND is_completed = 0 
+                AND deadline <= date("now", "+30 days")
+                ORDER BY deadline
+                LIMIT 2
+            ''', (user_id,))
+        
+        near_goals = cursor.fetchall()
         
         for goal in near_goals:
             progress = (goal['current_amount'] / goal['target_amount'] * 100) if goal['target_amount'] > 0 else 0
@@ -1072,23 +1554,30 @@ def goals():
         filter_priority = request.args.get('priority', 'all')
         
         conn = get_db_connection()
+        cursor = conn.cursor()
         
         # Construir query
-        query = 'SELECT * FROM goals WHERE user_id = ?'
+        if DATABASE.startswith('postgresql://'):
+            query = 'SELECT * FROM goals WHERE user_id = %s'
+        else:
+            query = 'SELECT * FROM goals WHERE user_id = ?'
+        
         params = [user_id]
         
         if filter_status == 'active':
-            query += ' AND is_completed = 0'
+            query += ' AND is_completed = FALSE' if DATABASE.startswith('postgresql://') else ' AND is_completed = 0'
         elif filter_status == 'completed':
-            query += ' AND is_completed = 1'
+            query += ' AND is_completed = TRUE' if DATABASE.startswith('postgresql://') else ' AND is_completed = 1'
         
         if filter_priority != 'all':
-            query += ' AND priority = ?'
+            query += ' AND priority = '
+            query += '%s' if DATABASE.startswith('postgresql://') else '?'
             params.append(filter_priority)
         
         query += ' ORDER BY priority = "high" DESC, deadline ASC'
         
-        goals_list = conn.execute(query, params).fetchall()
+        cursor.execute(query, params)
+        goals_list = cursor.fetchall()
         goals_dict = [dict(goal) for goal in goals_list]
         
         # Estatísticas
@@ -1148,10 +1637,19 @@ def add_goal():
             return jsonify({'success': False, 'error': 'Dados inválidos'})
         
         conn = get_db_connection()
-        conn.execute('''
-            INSERT INTO goals (user_id, title, description, target_amount, deadline, priority)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ''', (user_id, title, description, target_amount, deadline, priority))
+        cursor = conn.cursor()
+        
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                INSERT INTO goals (user_id, title, description, target_amount, deadline, priority)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            ''', (user_id, title, description, target_amount, deadline, priority))
+        else:
+            cursor.execute('''
+                INSERT INTO goals (user_id, title, description, target_amount, deadline, priority)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (user_id, title, description, target_amount, deadline, priority))
+        
         conn.commit()
         conn.close()
         
@@ -1174,11 +1672,15 @@ def update_goal_progress(goal_id):
             return jsonify({'success': False, 'error': 'Valor inválido'})
         
         conn = get_db_connection()
+        cursor = conn.cursor()
         
         # Verificar se a meta existe e pertence ao usuário
-        goal = conn.execute('''
-            SELECT * FROM goals WHERE id = ? AND user_id = ?
-        ''', (goal_id, user_id)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('SELECT * FROM goals WHERE id = %s AND user_id = %s', (goal_id, user_id))
+        else:
+            cursor.execute('SELECT * FROM goals WHERE id = ? AND user_id = ?', (goal_id, user_id))
+        
+        goal = cursor.fetchone()
         
         if not goal:
             return jsonify({'success': False, 'error': 'Meta não encontrada'})
@@ -1187,13 +1689,20 @@ def update_goal_progress(goal_id):
         new_amount = goal['current_amount'] + amount
         
         # Verificar se a meta foi concluída
-        is_completed = 1 if new_amount >= goal['target_amount'] else 0
+        is_completed = True if new_amount >= goal['target_amount'] else False
         
-        conn.execute('''
-            UPDATE goals 
-            SET current_amount = ?, is_completed = ?
-            WHERE id = ? AND user_id = ?
-        ''', (new_amount, is_completed, goal_id, user_id))
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                UPDATE goals 
+                SET current_amount = %s, is_completed = %s
+                WHERE id = %s AND user_id = %s
+            ''', (new_amount, is_completed, goal_id, user_id))
+        else:
+            cursor.execute('''
+                UPDATE goals 
+                SET current_amount = ?, is_completed = ?
+                WHERE id = ? AND user_id = ?
+            ''', (new_amount, 1 if is_completed else 0, goal_id, user_id))
         
         conn.commit()
         conn.close()
@@ -1215,7 +1724,13 @@ def delete_goal(goal_id):
     
     try:
         conn = get_db_connection()
-        conn.execute('DELETE FROM goals WHERE id = ? AND user_id = ?', (goal_id, user_id))
+        cursor = conn.cursor()
+        
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('DELETE FROM goals WHERE id = %s AND user_id = %s', (goal_id, user_id))
+        else:
+            cursor.execute('DELETE FROM goals WHERE id = ? AND user_id = ?', (goal_id, user_id))
+        
         conn.commit()
         conn.close()
         
@@ -1232,6 +1747,7 @@ def ai_financeira():
         user_id = session['user_id']
         
         conn = get_db_connection()
+        cursor = conn.cursor()
         
         # Dados para análise da IA
         monthly_data = []
@@ -1240,18 +1756,36 @@ def ai_financeira():
             month_year = date.strftime('%Y-%m')
             month_name = date.strftime('%b')
             
-            income_result = conn.execute('''
-                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-                WHERE user_id = ? AND type = 'income'
-                AND strftime('%Y-%m', transaction_date) = ?
-            ''', (user_id, month_year)).fetchone()
+            if DATABASE.startswith('postgresql://'):
+                cursor.execute('''
+                    SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                    WHERE user_id = %s AND type = 'income'
+                    AND TO_CHAR(transaction_date, 'YYYY-MM') = %s
+                ''', (user_id, month_year))
+            else:
+                cursor.execute('''
+                    SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                    WHERE user_id = ? AND type = 'income'
+                    AND strftime('%Y-%m', transaction_date) = ?
+                ''', (user_id, month_year))
+            
+            income_result = cursor.fetchone()
             income = float(income_result['total']) if income_result else 0
             
-            expense_result = conn.execute('''
-                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-                WHERE user_id = ? AND type = 'expense'
-                AND strftime('%Y-%m', transaction_date) = ?
-            ''', (user_id, month_year)).fetchone()
+            if DATABASE.startswith('postgresql://'):
+                cursor.execute('''
+                    SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                    WHERE user_id = %s AND type = 'expense'
+                    AND TO_CHAR(transaction_date, 'YYYY-MM') = %s
+                ''', (user_id, month_year))
+            else:
+                cursor.execute('''
+                    SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                    WHERE user_id = ? AND type = 'expense'
+                    AND strftime('%Y-%m', transaction_date) = ?
+                ''', (user_id, month_year))
+            
+            expense_result = cursor.fetchone()
             expense = float(expense_result['total']) if expense_result else 0
             
             monthly_data.append({
@@ -1302,6 +1836,8 @@ def generate_ai_recommendations(user_id, conn, monthly_data):
     recommendations = []
     
     try:
+        cursor = conn.cursor()
+        
         # Análise básica
         if len(monthly_data) >= 2:
             latest = monthly_data[-1]
@@ -1330,16 +1866,30 @@ def generate_ai_recommendations(user_id, conn, monthly_data):
                     })
         
         # Análise de categorias de despesa
-        expense_categories = conn.execute('''
-            SELECT c.name, SUM(t.amount) as total
-            FROM transactions t
-            JOIN categories c ON t.category_id = c.id
-            WHERE t.user_id = ? AND t.type = 'expense'
-            AND strftime('%Y-%m', t.transaction_date) = strftime('%Y-%m', 'now')
-            GROUP BY c.id
-            ORDER BY total DESC
-            LIMIT 3
-        ''', (user_id,)).fetchall()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT c.name, SUM(t.amount) as total
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE t.user_id = %s AND t.type = 'expense'
+                AND TO_CHAR(t.transaction_date, 'YYYY-MM') = TO_CHAR(CURRENT_DATE, 'YYYY-MM')
+                GROUP BY c.id, c.name
+                ORDER BY total DESC
+                LIMIT 3
+            ''', (user_id,))
+        else:
+            cursor.execute('''
+                SELECT c.name, SUM(t.amount) as total
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE t.user_id = ? AND t.type = 'expense'
+                AND strftime('%Y-%m', t.transaction_date) = strftime('%Y-%m', 'now')
+                GROUP BY c.id
+                ORDER BY total DESC
+                LIMIT 3
+            ''', (user_id,))
+        
+        expense_categories = cursor.fetchall()
         
         if expense_categories:
             top_category = expense_categories[0]
@@ -1357,12 +1907,22 @@ def generate_ai_recommendations(user_id, conn, monthly_data):
                     })
         
         # Verificação de metas
-        goals = conn.execute('''
-            SELECT title, target_amount, current_amount, deadline
-            FROM goals 
-            WHERE user_id = ? AND is_completed = 0
-            AND deadline <= date('now', '+30 days')
-        ''', (user_id,)).fetchall()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT title, target_amount, current_amount, deadline
+                FROM goals 
+                WHERE user_id = %s AND is_completed = FALSE
+                AND deadline <= CURRENT_DATE + INTERVAL '30 days'
+            ''', (user_id,))
+        else:
+            cursor.execute('''
+                SELECT title, target_amount, current_amount, deadline
+                FROM goals 
+                WHERE user_id = ? AND is_completed = 0
+                AND deadline <= date('now', '+30 days')
+            ''', (user_id,))
+        
+        goals = cursor.fetchall()
         
         for goal in goals:
             progress = (goal['current_amount'] / goal['target_amount'] * 100) if goal['target_amount'] > 0 else 0
@@ -1389,7 +1949,14 @@ def profile():
         user_id = session['user_id']
         
         conn = get_db_connection()
-        user = conn.execute('SELECT * FROM users WHERE id = ?', (user_id,)).fetchone()
+        cursor = conn.cursor()
+        
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('SELECT * FROM users WHERE id = %s', (user_id,))
+        else:
+            cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))
+        
+        user = cursor.fetchone()
         user_dict = dict(user) if user else {}
         
         # Estatísticas do usuário
@@ -1423,38 +1990,67 @@ def profile():
 def get_user_statistics(user_id, conn):
     """Obter estatísticas do usuário"""
     try:
+        cursor = conn.cursor()
+        
         # Total de transações
-        total_transactions_result = conn.execute('''
-            SELECT COUNT(*) as count FROM transactions WHERE user_id = ?
-        ''', (user_id,)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('SELECT COUNT(*) as count FROM transactions WHERE user_id = %s', (user_id,))
+        else:
+            cursor.execute('SELECT COUNT(*) as count FROM transactions WHERE user_id = ?', (user_id,))
+        
+        total_transactions_result = cursor.fetchone()
         total_transactions = total_transactions_result['count'] if total_transactions_result else 0
         
         # Total de metas
-        total_goals_result = conn.execute('''
-            SELECT COUNT(*) as count FROM goals WHERE user_id = ?
-        ''', (user_id,)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('SELECT COUNT(*) as count FROM goals WHERE user_id = %s', (user_id,))
+        else:
+            cursor.execute('SELECT COUNT(*) as count FROM goals WHERE user_id = ?', (user_id,))
+        
+        total_goals_result = cursor.fetchone()
         total_goals = total_goals_result['count'] if total_goals_result else 0
         
         # Dias usando o sistema
-        user_data = conn.execute('SELECT created_at FROM users WHERE id = ?', (user_id,)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('SELECT created_at FROM users WHERE id = %s', (user_id,))
+        else:
+            cursor.execute('SELECT created_at FROM users WHERE id = ?', (user_id,))
+        
+        user_data = cursor.fetchone()
         days_active = 1
         if user_data and user_data['created_at']:
             try:
-                join_date = datetime.strptime(user_data['created_at'], '%Y-%m-%d %H:%M:%S')
+                if isinstance(user_data['created_at'], str):
+                    join_date = datetime.strptime(user_data['created_at'], '%Y-%m-%d %H:%M:%S')
+                else:
+                    join_date = user_data['created_at']
                 days_active = (datetime.now() - join_date).days + 1
             except:
                 days_active = 1
         
         # Categorias mais usadas
-        top_categories = conn.execute('''
-            SELECT c.name, COUNT(t.id) as count
-            FROM transactions t
-            JOIN categories c ON t.category_id = c.id
-            WHERE t.user_id = ?
-            GROUP BY c.id
-            ORDER BY count DESC
-            LIMIT 3
-        ''', (user_id,)).fetchall()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT c.name, COUNT(t.id) as count
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE t.user_id = %s
+                GROUP BY c.id, c.name
+                ORDER BY count DESC
+                LIMIT 3
+            ''', (user_id,))
+        else:
+            cursor.execute('''
+                SELECT c.name, COUNT(t.id) as count
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE t.user_id = ?
+                GROUP BY c.id
+                ORDER BY count DESC
+                LIMIT 3
+            ''', (user_id,))
+        
+        top_categories = cursor.fetchall()
         top_categories_list = [dict(cat) for cat in top_categories]
         
         return {
@@ -1489,21 +2085,32 @@ def update_profile():
             return jsonify({'success': False, 'error': 'Email é obrigatório'})
         
         conn = get_db_connection()
+        cursor = conn.cursor()
         
         # Verificar se email já existe (exceto para o próprio usuário)
-        existing = conn.execute('''
-            SELECT id FROM users WHERE email = ? AND id != ?
-        ''', (email, user_id)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('SELECT id FROM users WHERE email = %s AND id != %s', (email, user_id))
+        else:
+            cursor.execute('SELECT id FROM users WHERE email = ? AND id != ?', (email, user_id))
+        
+        existing = cursor.fetchone()
         
         if existing:
             return jsonify({'success': False, 'error': 'Email já está em uso'})
         
         # Atualizar perfil
-        conn.execute('''
-            UPDATE users 
-            SET full_name = ?, email = ?, theme = ?
-            WHERE id = ?
-        ''', (full_name, email, theme, user_id))
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                UPDATE users 
+                SET full_name = %s, email = %s, theme = %s
+                WHERE id = %s
+            ''', (full_name, email, theme, user_id))
+        else:
+            cursor.execute('''
+                UPDATE users 
+                SET full_name = ?, email = ?, theme = ?
+                WHERE id = ?
+            ''', (full_name, email, theme, user_id))
         
         conn.commit()
         conn.close()
@@ -1539,20 +2146,37 @@ def api_dashboard_data():
         user_id = session['user_id']
         
         conn = get_db_connection()
+        cursor = conn.cursor()
         
         # Dados em tempo real
         today = datetime.now().strftime('%Y-%m-%d')
         
-        today_income_result = conn.execute('''
-            SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-            WHERE user_id = ? AND type = 'income' AND date(transaction_date) = ?
-        ''', (user_id, today)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = %s AND type = 'income' AND transaction_date = %s
+            ''', (user_id, today))
+        else:
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = ? AND type = 'income' AND date(transaction_date) = ?
+            ''', (user_id, today))
+        
+        today_income_result = cursor.fetchone()
         today_income = float(today_income_result['total']) if today_income_result else 0
         
-        today_expense_result = conn.execute('''
-            SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
-            WHERE user_id = ? AND type = 'expense' AND date(transaction_date) = ?
-        ''', (user_id, today)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = %s AND type = 'expense' AND transaction_date = %s
+            ''', (user_id, today))
+        else:
+            cursor.execute('''
+                SELECT COALESCE(SUM(amount), 0) as total FROM transactions 
+                WHERE user_id = ? AND type = 'expense' AND date(transaction_date) = ?
+            ''', (user_id, today))
+        
+        today_expense_result = cursor.fetchone()
         today_expense = float(today_expense_result['total']) if today_expense_result else 0
         
         # Alertas urgentes
@@ -1567,11 +2191,20 @@ def api_dashboard_data():
             })
         
         # Metas vencendo hoje
-        today_goals = conn.execute('''
-            SELECT COUNT(*) as count FROM goals 
-            WHERE user_id = ? AND is_completed = 0 
-            AND deadline = date('now')
-        ''', (user_id,)).fetchone()
+        if DATABASE.startswith('postgresql://'):
+            cursor.execute('''
+                SELECT COUNT(*) as count FROM goals 
+                WHERE user_id = %s AND is_completed = FALSE 
+                AND deadline = CURRENT_DATE
+            ''', (user_id,))
+        else:
+            cursor.execute('''
+                SELECT COUNT(*) as count FROM goals 
+                WHERE user_id = ? AND is_completed = 0 
+                AND deadline = date('now')
+            ''', (user_id,))
+        
+        today_goals = cursor.fetchone()
         
         if today_goals and today_goals['count'] > 0:
             urgent_alerts.append({
@@ -1601,6 +2234,16 @@ def api_dashboard_data():
             'timestamp': datetime.now().isoformat()
         })
 
+@app.before_request
+def before_request():
+    """Executar antes de cada requisição"""
+    # Garantir que a sessão tenha valores padrão
+    if 'user_id' not in session:
+        session.setdefault('theme', 'executive')
+        session.setdefault('currency', 'BRL')
+        session.setdefault('language', 'pt_BR')
+    session.permanent = True
+
 # ===== INICIALIZAÇÃO =====
 
 if __name__ == '__main__':
@@ -1614,22 +2257,14 @@ if __name__ == '__main__':
     # Inicializar banco
     init_db()
     
+    port = int(os.environ.get('PORT', 5000))
+    
     print("\n" + "="*60)
     print("🚀 CONTASMART PRO EXECUTIVO - SISTEMA FINANCEIRO")
     print("="*60)
-    print("🌐 Acesse: http://localhost:5000")
+    print(f"🌐 Acesse: http://localhost:{port}")
     print("👤 Login: admin")
     print("🔑 Senha: admin2026")
     print("\n⚡ Servidor executivo iniciando...\n")
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
-
-@app.before_request
-def before_request():
-    """Executar antes de cada requisição"""
-    # Garantir que a sessão tenha valores padrão
-    if 'user_id' not in session:
-        session.setdefault('theme', 'executive')
-        session.setdefault('currency', 'BRL')
-        session.setdefault('language', 'pt_BR')
-    session.permanent = True
+    app.run(debug=False, host='0.0.0.0', port=port)
