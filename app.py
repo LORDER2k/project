@@ -569,6 +569,95 @@ def profile():
         return render_template('perfil_executivo.html',
                              user={},
                              now=datetime.now())
+    
+@app.route('/api/monthly_data')
+@login_required
+def api_monthly_data():
+    """API para dados mensais dos gráficos"""
+    try:
+        user_id = session['user_id']
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        placeholder = sql_placeholder()
+        
+        # Dados dos últimos 6 meses
+        months = []
+        income_data = []
+        expense_data = []
+        
+        for i in range(5, -1, -1):
+            date = datetime.now() - timedelta(days=30*i)
+            month_year = date.strftime('%Y-%m')
+            month_name = date.strftime('%b')
+            months.append(month_name)
+            
+            if DB_TYPE == 'postgresql':
+                execute_sql(cursor, 
+                           f"SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = {placeholder} AND type = 'income' AND TO_CHAR(transaction_date, 'YYYY-MM') = {placeholder}", 
+                           (user_id, month_year))
+            else:
+                execute_sql(cursor, 
+                           f"SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = {placeholder} AND type = 'income' AND strftime('%Y-%m', transaction_date) = {placeholder}", 
+                           (user_id, month_year))
+            income = float(cursor.fetchone()['total'])
+            income_data.append(income)
+            
+            if DB_TYPE == 'postgresql':
+                execute_sql(cursor, 
+                           f"SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = {placeholder} AND type = 'expense' AND TO_CHAR(transaction_date, 'YYYY-MM') = {placeholder}", 
+                           (user_id, month_year))
+            else:
+                execute_sql(cursor, 
+                           f"SELECT COALESCE(SUM(amount), 0) as total FROM transactions WHERE user_id = {placeholder} AND type = 'expense' AND strftime('%Y-%m', transaction_date) = {placeholder}", 
+                           (user_id, month_year))
+            expense = float(cursor.fetchone()['total'])
+            expense_data.append(expense)
+        
+        # Dados por categoria (este mês)
+        current_month = datetime.now().strftime('%Y-%m')
+        categories_data = []
+        
+        if DB_TYPE == 'postgresql':
+            execute_sql(cursor, f'''
+                SELECT c.name, COALESCE(SUM(t.amount), 0) as total
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE t.user_id = {placeholder} AND t.type = 'expense'
+                AND TO_CHAR(t.transaction_date, 'YYYY-MM') = {placeholder}
+                GROUP BY c.id, c.name
+                ORDER BY total DESC
+                LIMIT 5
+            ''', (user_id, current_month))
+        else:
+            execute_sql(cursor, f'''
+                SELECT c.name, COALESCE(SUM(t.amount), 0) as total
+                FROM transactions t
+                JOIN categories c ON t.category_id = c.id
+                WHERE t.user_id = ? AND t.type = 'expense'
+                AND strftime('%Y-%m', t.transaction_date) = ?
+                GROUP BY c.id
+                ORDER BY total DESC
+                LIMIT 5
+            ''', (user_id, current_month))
+        
+        categories = cursor.fetchall()
+        
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'months': months,
+            'income': income_data,
+            'expense': expense_data,
+            'categories': {
+                'labels': [cat['name'] for cat in categories],
+                'data': [float(cat['total']) for cat in categories]
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})    
 
 @app.route('/about')
 def about():

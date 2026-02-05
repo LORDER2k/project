@@ -1,895 +1,499 @@
-{% extends "base_executivo.html" %}
-
-{% block title %}Dashboard Executivo - ContaSmart Pro{% endblock %}
-{% block page_title %}Dashboard Executivo{% endblock %}
-{% block page_subtitle %}Visão geral e métricas financeiras em tempo real{% endblock %}
-
-{% block breadcrumb %}
-<li><a href="#">Dashboard Financeiro</a></li>
-{% endblock %}
-
-{% block extra_css %}
-<style>
-    /* Estilos específicos para dashboard */
-    .quick-action-card {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius-lg);
-        padding: var(--spacing-lg);
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-md);
-        cursor: pointer;
-        transition: all var(--transition-fast);
-    }
-    
-    .quick-action-card:hover {
-        background: var(--bg-tertiary);
-        border-color: var(--primary-color);
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-md);
-    }
-    
-    .quick-action-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: var(--border-radius-md);
-        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-    }
-    
-    .quick-action-info h4 {
-        font-size: var(--font-size-sm, 0.9rem);
-        font-weight: 600;
-        margin-bottom: 4px;
-    }
-    
-    .quick-action-info p {
-        font-size: var(--font-size-xs, 0.8rem);
-        color: var(--text-muted);
-    }
-    
-    /* Alerts Section */
-    .alerts-section {
-        margin-bottom: var(--spacing-xl);
-    }
-    
-    .alert-card {
-        background: var(--bg-card);
-        border-left: 4px solid;
-        border-radius: var(--border-radius-md);
-        padding: var(--spacing-lg);
-        margin-bottom: var(--spacing-md);
-        display: flex;
-        align-items: flex-start;
-        gap: var(--spacing-md);
-        transition: all var(--transition-fast);
-    }
-    
-    .alert-card:hover {
-        transform: translateX(4px);
-    }
-    
-    .alert-card.danger {
-        border-left-color: var(--danger-color);
-        background: rgba(255, 51, 102, 0.05);
-    }
-    
-    .alert-card.warning {
-        border-left-color: var(--warning-color);
-        background: rgba(255, 153, 0, 0.05);
-    }
-    
-    .alert-card.info {
-        border-left-color: var(--info-color);
-        background: rgba(0, 204, 255, 0.05);
-    }
-    
-    .alert-card.success {
-        border-left-color: var(--success-color);
-        background: rgba(0, 204, 136, 0.05);
-    }
-    
-    .alert-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: var(--border-radius-round);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1rem;
-    }
-    
-    .alert-card.danger .alert-icon {
-        background: rgba(255, 51, 102, 0.2);
-        color: var(--danger-color);
-    }
-    
-    .alert-card.warning .alert-icon {
-        background: rgba(255, 153, 0, 0.2);
-        color: var(--warning-color);
-    }
-    
-    .alert-card.info .alert-icon {
-        background: rgba(0, 204, 255, 0.2);
-        color: var(--info-color);
-    }
-    
-    .alert-card.success .alert-icon {
-        background: rgba(0, 204, 136, 0.2);
-        color: var(--success-color);
-    }
-    
-    .alert-content h4 {
-        font-size: 1rem;
-        font-weight: 600;
-        margin-bottom: 4px;
-    }
-    
-    .alert-content p {
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-        margin-bottom: var(--spacing-xs);
-    }
-    
-    .alert-action {
-        font-size: 0.8rem;
-        color: var(--primary-color);
-        font-family: var(--font-mono);
-        text-decoration: none;
-        transition: color var(--transition-fast);
-    }
-    
-    .alert-action:hover {
-        color: var(--primary-light);
-        text-decoration: underline;
-    }
-    
-    /* Section Header */
-    .section-header {
-        padding: var(--spacing-lg);
-        border-bottom: 1px solid var(--border-color);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    
-    .section-header h3 {
-        font-size: 1.25rem;
-        font-weight: 700;
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-sm);
-    }
-    
-    .section-header .badge {
-        background: var(--primary-color);
-        color: white;
-        padding: 2px 8px;
-        border-radius: 10px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-    
-    /* Goals Progress */
-    .goals-progress {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius-lg);
-        padding: var(--spacing-lg);
-    }
-    
-    .goal-item {
-        margin-bottom: var(--spacing-lg);
-        padding-bottom: var(--spacing-lg);
-        border-bottom: 1px solid var(--border-light);
-    }
-    
-    .goal-item:last-child {
-        margin-bottom: 0;
-        padding-bottom: 0;
-        border-bottom: none;
-    }
-    
-    .goal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: var(--spacing-sm);
-    }
-    
-    .goal-title {
-        font-weight: 600;
-        font-size: 1rem;
-    }
-    
-    .goal-priority {
-        font-size: 0.75rem;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-family: var(--font-mono);
-    }
-    
-    .goal-priority.high {
-        background: rgba(255, 51, 102, 0.1);
-        color: var(--danger-color);
-    }
-    
-    .goal-priority.medium {
-        background: rgba(255, 153, 0, 0.1);
-        color: var(--warning-color);
-    }
-    
-    .goal-priority.low {
-        background: rgba(0, 204, 255, 0.1);
-        color: var(--info-color);
-    }
-    
-    .goal-progress-info {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.9rem;
-        margin-bottom: var(--spacing-xs);
-    }
-    
-    .goal-amount {
-        font-family: var(--font-mono);
-        font-weight: 600;
-    }
-    
-    .goal-percentage {
-        color: var(--text-muted);
-    }
-    
-    /* Metric Items */
-    .metric-item {
-        text-align: center;
-    }
-    
-    .metric-value {
-        font-size: 1.5rem;
-        font-weight: 800;
-        margin-bottom: 4px;
-        font-family: var(--font-mono);
-    }
-    
-    .metric-value.positive {
-        color: var(--success-color);
-    }
-    
-    .metric-value.negative {
-        color: var(--danger-color);
-    }
-    
-    .metric-label {
-        font-size: 0.75rem;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    
-    /* Period Selector */
-    .period-selector {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-sm);
-    }
-    
-    .neon-select {
-        background: var(--bg-tertiary);
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius-md);
-        color: var(--text-primary);
-        padding: 8px 12px;
-        font-family: var(--font-main);
-        font-size: 0.9rem;
-        transition: all var(--transition-fast);
-    }
-    
-    .neon-select:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 2px rgba(0, 102, 255, 0.2);
-    }
-    
-    .neon-select.sm {
-        padding: 6px 10px;
-        font-size: 0.85rem;
-    }
-    
-    /* Chart Actions */
-    .chart-actions {
-        display: flex;
-        gap: var(--spacing-xs);
-    }
-    
-    /* Welcome Message */
-    .welcome-message {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 60vh;
-    }
-</style>
-{% endblock %}
-
-{% block content %}
-{% if not session.get('user_id') %}
-<!-- Redirect to login or show welcome -->
-<div class="welcome-message">
-    <div class="neon-card" style="text-align: center; padding: var(--spacing-xxl); max-width: 600px; width: 100%;">
-        <h2 style="margin-bottom: var(--spacing-lg); font-size: 2rem;">Bem-vindo ao ContaSmart Pro Executive</h2>
-        <p style="margin-bottom: var(--spacing-xl); color: var(--text-secondary); font-size: 1.1rem;">
-            Faça login para acessar seu dashboard financeiro personalizado
-        </p>
-        <div style="display: flex; gap: var(--spacing-lg); justify-content: center; flex-wrap: wrap;">
-            <a href="{{ url_for('login') }}" class="neon-btn primary lg">
-                <i class="fas fa-sign-in-alt"></i>
-                Fazer Login
-            </a>
-            <a href="{{ url_for('register') }}" class="neon-btn outline lg">
-                <i class="fas fa-user-plus"></i>
-                Criar Conta
-            </a>
-        </div>
-    </div>
-</div>
-{% else %}
-<!-- Stats Overview -->
-<div class="stats-grid">
-    <div class="neon-stats-card">
-        <div class="stat-icon">
-            <i class="fas fa-wallet"></i>
-        </div>
-        <div class="stat-label">Saldo Total</div>
-        <div class="stat-value">R$ {{ "%.2f"|format(stats.balance if stats else 0) }}</div>
-        <div class="stat-trend">
-            {% if stats and stats.month_balance %}
-                {% set balance_change = stats.month_balance - (stats.month_balance * 0.9) %}
-                {% if balance_change > 0 %}
-                    <span class="positive"><i class="fas fa-arrow-up"></i> {{ "%.1f"|format((balance_change/stats.month_balance)*100 if stats.month_balance > 0 else 0) }}%</span>
-                {% else %}
-                    <span class="negative"><i class="fas fa-arrow-down"></i> {{ "%.1f"|format((balance_change/stats.month_balance)*100 if stats.month_balance > 0 else 0) }}%</span>
-                {% endif %}
-            {% else %}
-                <span class="neutral"><i class="fas fa-minus"></i> 0.0%</span>
-            {% endif %}
-        </div>
-    </div>
-    
-    <div class="neon-stats-card">
-        <div class="stat-icon">
-            <i class="fas fa-money-bill-wave"></i>
-        </div>
-        <div class="stat-label">Receitas (Mês)</div>
-        <div class="stat-value">R$ {{ "%.2f"|format(stats.month_income if stats else 0) }}</div>
-        <div class="stat-trend">
-            {% if stats and stats.total_income %}
-                <span class="positive"><i class="fas fa-arrow-up"></i> {{ "%.1f"|format((stats.month_income/(stats.total_income/12))*100 if stats.total_income > 0 else 0) }}% da média</span>
-            {% else %}
-                <span class="neutral"><i class="fas fa-minus"></i> 0.0%</span>
-            {% endif %}
-        </div>
-    </div>
-    
-    <div class="neon-stats-card">
-        <div class="stat-icon">
-            <i class="fas fa-credit-card"></i>
-        </div>
-        <div class="stat-label">Despesas (Mês)</div>
-        <div class="stat-value">R$ {{ "%.2f"|format(stats.month_expense if stats else 0) }}</div>
-        <div class="stat-trend">
-            {% if stats and stats.month_income %}
-                {% set expense_ratio = (stats.month_expense/stats.month_income)*100 if stats.month_income > 0 else 0 %}
-                <span class="{{ 'danger' if expense_ratio > 80 else 'warning' if expense_ratio > 60 else 'positive' }}">
-                    {{ "%.0f"|format(expense_ratio) }}% da receita
-                </span>
-            {% else %}
-                <span class="neutral">0% da receita</span>
-            {% endif %}
-        </div>
-    </div>
-    
-    <div class="neon-stats-card">
-        <div class="stat-icon">
-            <i class="fas fa-bullseye"></i>
-        </div>
-        <div class="stat-label">Metas</div>
-        <div class="stat-value">{{ stats.completed_goals if stats else 0 }}/{{ stats.total_goals if stats else 0 }}</div>
-        <div class="stat-trend">
-            {% if stats and stats.avg_progress %}
-                <span class="{{ 'positive' if stats.avg_progress > 70 else 'warning' if stats.avg_progress > 40 else 'danger' }}">
-                    {{ "%.1f"|format(stats.avg_progress) }}% de progresso
-                </span>
-            {% else %}
-                <span class="neutral">0.0% de progresso</span>
-            {% endif %}
-        </div>
-    </div>
-</div>
-
-<!-- Quick Actions -->
-<div class="quick-actions-grid">
-    <div class="quick-action-card" onclick="openModal('addTransaction')">
-        <div class="quick-action-icon">
-            <i class="fas fa-plus"></i>
-        </div>
-        <div class="quick-action-info">
-            <h4>Nova Transação</h4>
-            <p>Adicionar receita ou despesa</p>
-        </div>
-    </div>
-    
-    <div class="quick-action-card" onclick="openModal('quickReport')">
-        <div class="quick-action-icon">
-            <i class="fas fa-file-export"></i>
-        </div>
-        <div class="quick-action-info">
-            <h4>Relatório Rápido</h4>
-            <p>Gerar relatório mensal</p>
-        </div>
-    </div>
-    
-    <div class="quick-action-card" onclick="openModal('setGoal')">
-        <div class="quick-action-icon">
-            <i class="fas fa-bullseye"></i>
-        </div>
-        <div class="quick-action-info">
-            <h4>Nova Meta</h4>
-            <p>Definir objetivo financeiro</p>
-        </div>
-    </div>
-    
-    <div class="quick-action-card" onclick="window.location.href='{{ url_for('analytics') }}'">
-        <div class="quick-action-icon">
-            <i class="fas fa-chart-bar"></i>
-        </div>
-        <div class="quick-action-info">
-            <h4>Análises</h4>
-            <p>Ver insights detalhados</p>
-        </div>
-    </div>
-</div>
-
-<!-- System Alerts -->
-<div class="alerts-section">
-    <div class="section-header">
-        <h3><i class="fas fa-bell"></i> Alertas do Sistema</h3>
-        <span class="badge">{{ alerts|length if alerts else 0 }}</span>
-    </div>
-    
-    <div class="alerts-list">
-        {% if alerts %}
-            {% for alert in alerts %}
-            <div class="alert-card {{ alert.type }}">
-                <div class="alert-icon">
-                    <i class="fas fa-{{ alert.icon }}"></i>
-                </div>
-                <div class="alert-content">
-                    <h4>{{ alert.title }}</h4>
-                    <p>{{ alert.message }}</p>
-                    <a href="#" class="alert-action">{{ alert.action }}</a>
-                </div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <div class="alert-card success">
-                <div class="alert-icon">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <div class="alert-content">
-                    <h4>Tudo em Ordem</h4>
-                    <p>Não há alertas críticos no momento</p>
-                    <a href="#" class="alert-action">Continue monitorando</a>
-                </div>
-            </div>
-        {% endif %}
-    </div>
-</div>
-
-<!-- Charts and Recent Transactions -->
-<div class="dashboard-grid">
-    <!-- Recent Transactions -->
-    <div class="neon-card">
-        <div class="section-header">
-            <h3><i class="fas fa-exchange-alt"></i> Transações Recentes</h3>
-            <a href="{{ url_for('transactions') }}" class="neon-btn sm">Ver Todas</a>
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ContaSmart Pro</title>
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #0066ff;
+            --secondary: #00ccff;
+            --success: #00ff88;
+            --danger: #ff3366;
+            --warning: #ffcc00;
+            --dark: #1a1a2e;
+            --light: #f8f9fa;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fb;
+        }
+        
+        .sidebar {
+            background: linear-gradient(135deg, var(--dark), #16213e);
+            color: white;
+            min-height: 100vh;
+            position: fixed;
+            width: 250px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 12px 20px;
+            margin: 5px 10px;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar .nav-link:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+        
+        .sidebar .nav-link.active {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            transition: all 0.3s;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+            border: none;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-income { background: linear-gradient(135deg, var(--success), #00cc77); color: white; }
+        .stat-expense { background: linear-gradient(135deg, var(--danger), #ff0066); color: white; }
+        .stat-balance { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; }
+        .stat-goals { background: linear-gradient(135deg, var(--warning), #ffaa00); color: white; }
+        
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .alert-card {
+            border-left: 4px solid;
+            border-radius: 8px;
+        }
+        
+        .alert-warning { border-color: var(--warning); }
+        .alert-success { border-color: var(--success); }
+        .alert-info { border-color: var(--primary); }
+        .alert-danger { border-color: var(--danger); }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                margin-left: -250px;
+            }
+            .sidebar.active {
+                margin-left: 0;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="p-4">
+            <h3 class="mb-4"><i class="fas fa-chart-line"></i> ContaSmart Pro</h3>
+            <p class="text-muted small mb-0">Bem-vindo, {{ session.full_name }}</p>
         </div>
         
-        <div class="neon-table-wrapper">
-            <table class="neon-table">
-                <thead>
-                    <tr>
-                        <th>Descrição</th>
-                        <th>Categoria</th>
-                        <th>Data</th>
-                        <th>Valor</th>
-                    </tr>
-                </thead>
-                <tbody>
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link active" href="{{ url_for('dashboard') }}">
+                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('transactions') }}">
+                    <i class="fas fa-exchange-alt me-2"></i> Transações
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('goals') }}">
+                    <i class="fas fa-bullseye me-2"></i> Metas
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#">
+                    <i class="fas fa-chart-pie me-2"></i> Relatórios
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('profile') }}">
+                    <i class="fas fa-user me-2"></i> Perfil
+                </a>
+            </li>
+            <li class="nav-item mt-4">
+                <a class="nav-link text-danger" href="{{ url_for('logout') }}">
+                    <i class="fas fa-sign-out-alt me-2"></i> Sair
+                </a>
+            </li>
+        </ul>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-tachometer-alt me-2"></i> Dashboard Financeiro</h2>
+            <div>
+                <span class="badge bg-success me-2">Online</span>
+                <span class="text-muted">{{ now.strftime('%d/%m/%Y %H:%M') }}</span>
+            </div>
+        </div>
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Stats Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon stat-income">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <h4 class="mb-1">{{ format_currency(total_income) }}</h4>
+                    <p class="text-muted mb-0">Total Receitas</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon stat-expense">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h4 class="mb-1">{{ format_currency(total_expense) }}</h4>
+                    <p class="text-muted mb-0">Total Despesas</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon stat-balance">
+                        <i class="fas fa-wallet"></i>
+                    </div>
+                    <h4 class="mb-1">{{ format_currency(balance) }}</h4>
+                    <p class="text-muted mb-0">Saldo Atual</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon stat-goals">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <h4 class="mb-1">{{ goals|length }}</h4>
+                    <p class="text-muted mb-0">Metas Ativas</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Charts Row -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="chart-container">
+                    <h5 class="mb-3"><i class="fas fa-chart-line me-2"></i> Tendência Mensal</h5>
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="chart-container">
+                    <h5 class="mb-3"><i class="fas fa-chart-pie me-2"></i> Categorias (Este Mês)</h5>
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recent Transactions & Goals -->
+        <div class="row">
+            <div class="col-md-7">
+                <div class="chart-container">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="fas fa-history me-2"></i> Transações Recentes</h5>
+                        <a href="{{ url_for('transactions') }}" class="btn btn-sm btn-primary">
+                            Ver Todas <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                    
                     {% if recent_transactions %}
-                        {% for transaction in recent_transactions %}
-                        <tr>
-                            <td>
-                                <div class="transaction-info">
-                                    <div class="transaction-title">{{ transaction.description or 'Transação' }}</div>
-                                    <div class="transaction-description">{{ transaction.transaction_date }}</div>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Data</th>
+                                        <th>Descrição</th>
+                                        <th>Categoria</th>
+                                        <th class="text-end">Valor</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for trans in recent_transactions[:5] %}
+                                    <tr>
+                                        <td>{{ trans.transaction_date }}</td>
+                                        <td>{{ trans.description or 'Sem descrição' }}</td>
+                                        <td>
+                                            <span class="badge" style="background-color: {{ trans.category_color or '#0066ff' }}">
+                                                {{ trans.category_name or 'Sem categoria' }}
+                                            </span>
+                                        </td>
+                                        <td class="text-end {% if trans.type == 'income' %}text-success{% else %}text-danger{% endif %}">
+                                            {% if trans.type == 'income' %}+{% else %}-{% endif %}
+                                            {{ format_currency(trans.amount) }}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Nenhuma transação registrada</p>
+                            <a href="{{ url_for('transactions') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i> Adicionar Transação
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="col-md-5">
+                <div class="chart-container">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0"><i class="fas fa-bullseye me-2"></i> Metas em Destaque</h5>
+                        <a href="{{ url_for('goals') }}" class="btn btn-sm btn-primary">
+                            Ver Todas <i class="fas fa-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                    
+                    {% if goals %}
+                        {% for goal in goals[:3] %}
+                        <div class="card mb-3 border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="mb-0">{{ goal.title }}</h6>
+                                    <span class="badge bg-{% if goal.priority == 'high' %}danger{% elif goal.priority == 'medium' %}warning{% else %}info{% endif %}">
+                                        {{ goal.priority }}
+                                    </span>
                                 </div>
-                            </td>
-                            <td>
-                                {% if transaction.category_name %}
-                                <span class="neon-badge primary" style="border-color: {{ transaction.category_color or '#0066ff' }}; color: {{ transaction.category_color or '#0066ff' }}">
-                                    <i class="{{ transaction.category_icon or 'fas fa-tag' }}"></i>
-                                    {{ transaction.category_name }}
-                                </span>
-                                {% else %}
-                                <span class="neon-badge">Não categorizada</span>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <span class="date">{{ transaction.transaction_date }}</span>
-                            </td>
-                            <td>
-                                <span class="amount {{ 'income' if transaction.type == 'income' else 'expense' }}">
-                                    {{ 'R$ +%.2f'|format(transaction.amount) if transaction.type == 'income' else 'R$ -%.2f'|format(transaction.amount) }}
-                                </span>
-                            </td>
-                        </tr>
+                                <p class="text-muted small mb-2">{{ goal.description or 'Sem descrição' }}</p>
+                                
+                                <!-- Progress Bar -->
+                                {% set progress = (goal.current_amount / goal.target_amount * 100) if goal.target_amount > 0 else 0 %}
+                                <div class="progress mb-2" style="height: 8px;">
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                         style="width: {{ progress }}%"
+                                         aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">
+                                        {{ format_currency(goal.current_amount) }} de {{ format_currency(goal.target_amount) }}
+                                    </small>
+                                    <small class="text-muted">
+                                        {% if goal.deadline %}
+                                            {{ goal.deadline }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
                         {% endfor %}
                     {% else %}
-                    <tr>
-                        <td colspan="4" style="text-align: center; padding: var(--spacing-xl); color: var(--text-muted);">
-                            <i class="fas fa-inbox" style="font-size: 2rem; margin-bottom: var(--spacing-md); display: block;"></i>
-                            Nenhuma transação recente
-                        </td>
-                    </tr>
+                        <div class="text-center py-4">
+                            <i class="fas fa-bullseye fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">Nenhuma meta definida</p>
+                            <button class="btn btn-primary" onclick="showAddGoalModal()">
+                                <i class="fas fa-plus me-1"></i> Criar Meta
+                            </button>
+                        </div>
                     {% endif %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-    
-    <!-- Goals Progress -->
-    <div class="goals-progress">
-        <div class="section-header">
-            <h3><i class="fas fa-bullseye"></i> Metas em Destaque</h3>
-            <a href="{{ url_for('goals') }}" class="neon-btn sm">Ver Todas</a>
+                </div>
+            </div>
         </div>
         
-        {% if goals %}
-            {% for goal in goals %}
-            <div class="goal-item">
-                <div class="goal-header">
-                    <div class="goal-title">{{ goal.title }}</div>
-                    <div class="goal-priority {{ goal.priority }}">{{ goal.priority|upper if goal.priority else 'MEDIUM' }}</div>
-                </div>
-                
-                <div class="goal-progress-info">
-                    <span class="goal-amount">
-                        R$ {{ "%.2f"|format(goal.current_amount or 0) }} / R$ {{ "%.2f"|format(goal.target_amount or 0) }}
-                    </span>
-                    <span class="goal-percentage">
-                        {{ "%.1f"|format((goal.current_amount / goal.target_amount) * 100 if goal.target_amount and goal.target_amount > 0 else 0) }}%
-                    </span>
-                </div>
-                
-                <div class="neon-progress">
-                    <div class="neon-progress-bar 
-                        {% if goal.target_amount and goal.target_amount > 0 %}
-                            {{ 'success' if (goal.current_amount / goal.target_amount) >= 1 else 'primary' if (goal.current_amount / goal.target_amount) >= 0.7 else 'warning' if (goal.current_amount / goal.target_amount) >= 0.4 else 'danger' }}
-                        {% else %}
-                            primary
-                        {% endif %}" 
-                         style="width: {{ (goal.current_amount / goal.target_amount) * 100 if goal.target_amount and goal.target_amount > 0 else 0 }}%">
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        {% else %}
-        <div style="text-align: center; padding: var(--spacing-xl); color: var(--text-muted);">
-            <i class="fas fa-bullseye" style="font-size: 2rem; margin-bottom: var(--spacing-md); display: block;"></i>
-            Nenhuma meta ativa
-        </div>
-        {% endif %}
-    </div>
-</div>
-
-<!-- Monthly Trends Chart -->
-<div class="charts-container">
-    <div class="neon-card">
-        <div class="section-header">
-            <h3><i class="fas fa-chart-line"></i> Tendência Mensal</h3>
-            <div class="period-selector">
-                <select class="neon-select sm" id="trendPeriod">
-                    <option value="6">Últimos 6 meses</option>
-                    <option value="12">Último ano</option>
-                </select>
-            </div>
-        </div>
-        <div style="height: 250px; position: relative;">
-            <canvas id="trendChart"></canvas>
-        </div>
-    </div>
-    
-    <div class="neon-card">
-        <div class="section-header">
-            <h3><i class="fas fa-chart-pie"></i> Distribuição por Categoria</h3>
-            <div class="chart-actions">
-                <button class="neon-btn sm outline" onclick="toggleChartType()">
-                    <i class="fas fa-exchange-alt"></i>
-                </button>
-            </div>
-        </div>
-        <div style="height: 250px; position: relative;">
-            <canvas id="categoryChart"></canvas>
-        </div>
-    </div>
-</div>
-
-<!-- System Metrics -->
-<div class="system-metrics-grid">
-    <div class="metric-item">
-        <div class="metric-value positive">
-            {% if stats and stats.month_income and stats.month_income > 0 %}
-                {{ "%.1f"|format((stats.month_income - stats.month_expense)/stats.month_income * 100) }}%
-            {% else %}
-                0.0%
-            {% endif %}
-        </div>
-        <div class="metric-label">Taxa de Poupança</div>
-    </div>
-    
-    <div class="metric-item">
-        <div class="metric-value">{{ stats.total_goals if stats else 0 }}</div>
-        <div class="metric-label">Metas Ativas</div>
-    </div>
-    
-    <div class="metric-item">
-        <div class="metric-value">{{ recent_transactions|length if recent_transactions else 0 }}</div>
-        <div class="metric-label">Transações Recentes</div>
-    </div>
-    
-    <div class="metric-item">
-        <div class="metric-value positive">{{ now.strftime('%d/%m/%Y') if now else '' }}</div>
-        <div class="metric-label">Data Atual</div>
-    </div>
-</div>
-{% endif %}
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        {% if session.get('user_id') %}
-        // Tendência Mensal Chart
-        const trendCtx = document.getElementById('trendChart');
-        if (trendCtx) {
-            const trendData = {{ trend_data|tojson|default('[]') }};
-            
-            if (trendData && trendData.length > 0) {
-                const months = trendData.map(item => item.month);
-                const incomes = trendData.map(item => item.income || 0);
-                const expenses = trendData.map(item => item.expense || 0);
-                const balances = trendData.map(item => item.balance || 0);
-                
-                // Destroy existing chart if it exists
-                if (window.trendChartInstance) {
-                    window.trendChartInstance.destroy();
-                }
-                
-                window.trendChartInstance = new Chart(trendCtx.getContext('2d'), {
-                    type: 'line',
-                    data: {
-                        labels: months,
-                        datasets: [
-                            {
-                                label: 'Receitas',
-                                data: incomes,
-                                borderColor: '#00ff88',
-                                backgroundColor: 'rgba(0, 255, 136, 0.1)',
-                                borderWidth: 2,
-                                fill: true,
-                                tension: 0.4
-                            },
-                            {
-                                label: 'Despesas',
-                                data: expenses,
-                                borderColor: '#ff3366',
-                                backgroundColor: 'rgba(255, 51, 102, 0.1)',
-                                borderWidth: 2,
-                                fill: true,
-                                tension: 0.4
-                            },
-                            {
-                                label: 'Saldo',
-                                data: balances,
-                                borderColor: '#0066ff',
-                                backgroundColor: 'rgba(0, 102, 255, 0.1)',
-                                borderWidth: 2,
-                                fill: false,
-                                tension: 0.4,
-                                borderDash: [5, 5]
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: {
-                                labels: {
-                                    color: '#a0a0c0',
-                                    font: {
-                                        family: 'Inter, sans-serif'
-                                    }
-                                }
-                            },
-                            tooltip: {
-                                mode: 'index',
-                                intersect: false,
-                                callbacks: {
-                                    label: function(context) {
-                                        let label = context.dataset.label || '';
-                                        if (label) {
-                                            label += ': ';
-                                        }
-                                        label += 'R$ ' + context.parsed.y.toLocaleString('pt-BR', {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2
-                                        });
-                                        return label;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            x: {
-                                grid: {
-                                    color: 'rgba(255, 255, 255, 0.05)'
-                                },
-                                ticks: {
-                                    color: '#a0a0c0'
-                                }
-                            },
-                            y: {
-                                grid: {
-                                    color: 'rgba(255, 255, 255, 0.05)'
-                                },
-                                ticks: {
-                                    color: '#a0a0c0',
-                                    callback: function(value) {
-                                        return 'R$ ' + value.toLocaleString('pt-BR');
-                                    }
-                                }
-                            }
-                        },
-                        interaction: {
-                            intersect: false,
-                            mode: 'index'
-                        }
-                    }
-                });
-            } else {
-                trendCtx.parentElement.innerHTML = `
-                    <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--text-muted);">
-                        <div style="text-align: center;">
-                            <i class="fas fa-chart-line" style="font-size: 3rem; margin-bottom: var(--spacing-md); display: block;"></i>
-                            <p>Adicione transações para ver gráficos</p>
+        <!-- Quick Stats -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="chart-container">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <h4 class="text-success">{{ format_currency(month_income) }}</h4>
+                            <p class="text-muted mb-0">Receitas (Mês)</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-danger">{{ format_currency(month_expense) }}</h4>
+                            <p class="text-muted mb-0">Despesas (Mês)</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-primary">{{ format_currency(month_balance) }}</h4>
+                            <p class="text-muted mb-0">Saldo (Mês)</p>
+                        </div>
+                        <div class="col-md-3">
+                            <h4 class="text-warning">{{ recent_transactions|length }}</h4>
+                            <p class="text-muted mb-0">Transações Totais</p>
                         </div>
                     </div>
-                `;
-            }
-        }
-        
-        // Category Distribution Chart
-        const categoryCtx = document.getElementById('categoryChart');
-        if (categoryCtx) {
-            let categoryChartType = 'doughnut';
-            
-            // Destroy existing chart if it exists
-            if (window.categoryChartInstance) {
-                window.categoryChartInstance.destroy();
-            }
-            
-            // Dados de exemplo para demonstração
-            window.categoryChartInstance = new Chart(categoryCtx.getContext('2d'), {
-                type: categoryChartType,
-                data: {
-                    labels: ['Alimentação', 'Transporte', 'Moradia', 'Lazer', 'Educação', 'Outros'],
-                    datasets: [{
-                        data: [25, 15, 30, 10, 12, 8],
-                        backgroundColor: [
-                            '#ff3366', '#ff9900', '#ff0066', '#00ccff', '#9966ff', '#33ccff'
-                        ],
-                        borderColor: '#1e1e28',
-                        borderWidth: 2
-                    }]
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Gráfico de Tendência Mensal
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        const monthlyChart = new Chart(monthlyCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
+                datasets: [{
+                    label: 'Receitas',
+                    data: [3000, 4200, 3800, 5100, 4900, 5500],
+                    borderColor: '#00ff88',
+                    backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Despesas',
+                    data: [2800, 3100, 2900, 3500, 4200, 3800],
+                    borderColor: '#ff3366',
+                    backgroundColor: 'rgba(255, 51, 102, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: {
-                                color: '#a0a0c0',
-                                font: {
-                                    family: 'Inter, sans-serif'
-                                }
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const label = context.label || '';
-                                    const value = context.parsed;
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = Math.round((value / total) * 100);
-                                    return `${label}: R$ ${value.toFixed(2)} (${percentage}%)`;
-                                }
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'R$ ' + value.toLocaleString('pt-BR');
                             }
                         }
                     }
                 }
-            });
-            
-            // Toggle chart type
-            window.toggleChartType = function() {
-                categoryChartType = categoryChartType === 'doughnut' ? 'pie' : 'doughnut';
-                window.categoryChartInstance.config.type = categoryChartType;
-                window.categoryChartInstance.update();
-            };
-        }
+            }
+        });
         
-        // Real-time dashboard updates
+        // Gráfico de Categorias
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        const categoryChart = new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Alimentação', 'Transporte', 'Moradia', 'Lazer', 'Outros'],
+                datasets: [{
+                    data: [25, 20, 30, 15, 10],
+                    backgroundColor: [
+                        '#ff3366',
+                        '#ff9900',
+                        '#ff0066',
+                        '#00ccff',
+                        '#9966ff'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+        
+        // Atualizar dados em tempo real
         function updateDashboard() {
-            fetch('/api/dashboard_data')
+            fetch('/api/quick_stats')
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Update today's metrics
-                        document.querySelectorAll('.today-income').forEach(el => {
-                            el.textContent = 'R$ ' + (data.today_income || 0).toFixed(2);
-                        });
-                        document.querySelectorAll('.today-expense').forEach(el => {
-                            el.textContent = 'R$ ' + (data.today_expense || 0).toFixed(2);
-                        });
+                        // Atualizar cards com dados reais
+                        document.querySelectorAll('.stat-card h4')[0].textContent = data.formatted.month_income;
+                        document.querySelectorAll('.stat-card h4')[1].textContent = data.formatted.month_expense;
+                        document.querySelectorAll('.stat-card h4')[2].textContent = data.formatted.month_balance;
                         
-                        // Update alerts if needed
-                        if (data.alerts && data.alerts.length > 0) {
-                            console.log('Novos alertas:', data.alerts);
+                        // Atualizar gráfico mensal com dados reais (se disponível)
+                        if (data.monthly_data) {
+                            monthlyChart.data.datasets[0].data = data.monthly_data.income;
+                            monthlyChart.data.datasets[1].data = data.monthly_data.expense;
+                            monthlyChart.update();
                         }
                     }
                 })
-                .catch(error => console.error('Error updating dashboard:', error));
+                .catch(error => console.log('Erro ao atualizar dashboard:', error));
         }
         
-        // Update every 30 seconds
+        // Atualizar a cada 30 segundos
         setInterval(updateDashboard, 30000);
         
-        // Update page load time
-        const loadTime = Date.now() - performance.timing.navigationStart;
-        const loadTimeElement = document.getElementById('loadTime');
-        if (loadTimeElement) {
-            loadTimeElement.textContent = (loadTime / 1000).toFixed(2) + 's';
-        }
-        {% endif %}
+        // Inicializar
+        updateDashboard();
         
-        // Open modal functions (já definida no base)
-        // window.openModal já está definido no base_executivo.html
-        
-        // Trend period change
-        const trendPeriodSelect = document.getElementById('trendPeriod');
-        if (trendPeriodSelect) {
-            trendPeriodSelect.addEventListener('change', function() {
-                const months = this.value;
-                alert(`Período alterado para ${months} meses. Implementar atualização do gráfico.`);
-                // Aqui você faria uma requisição para atualizar os dados do gráfico
-            });
+        // Mobile menu toggle
+        function toggleSidebar() {
+            document.querySelector('.sidebar').classList.toggle('active');
         }
-    });
-</script>
-{% endblock %}
+        
+        // Se estiver em mobile, adicionar botão de menu
+        if (window.innerWidth < 768) {
+            const menuBtn = document.createElement('button');
+            menuBtn.className = 'btn btn-primary position-fixed bottom-0 end-0 m-3 rounded-circle';
+            menuBtn.style.width = '50px';
+            menuBtn.style.height = '50px';
+            menuBtn.style.zIndex = '1000';
+            menuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+            menuBtn.onclick = toggleSidebar;
+            document.body.appendChild(menuBtn);
+        }
+    </script>
+</body>
+</html>
