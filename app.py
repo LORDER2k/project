@@ -1,6 +1,9 @@
 """
 CONTASMART PRO EXECUTIVO - Sistema Financeiro
 Versão otimizada para Render.com
+Desenvolvedor: Deyvid Santos Luz
+Empresa: deyv's company
+Email: suportdeyvid@gmail.com
 """
 
 import os
@@ -22,10 +25,9 @@ app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
 
 # Configuração de banco para Render
 DATABASE_URL = os.environ.get('DATABASE_URL')
-if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
-    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
-
 if DATABASE_URL:
+    if DATABASE_URL.startswith("postgres://"):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
     DATABASE = DATABASE_URL
     DB_TYPE = 'postgresql'
     print(f"🔗 Usando PostgreSQL no Render")
@@ -33,6 +35,29 @@ else:
     DATABASE = 'database/contasmart.db'
     DB_TYPE = 'sqlite'
     print("📁 Usando SQLite local")
+
+# ===== SISTEMA PERSONALIZADO =====
+
+def get_system_info():
+    """Retorna informações do sistema personalizadas"""
+    return {
+        'company': "deyv's company",
+        'developer': "Deyvid Santos Luz",
+        'email': "suportdeyvid@gmail.com",
+        'version': "2.0.1 Executive",
+        'year': 2026
+    }
+
+def get_developer_info():
+    """Retorna informações do desenvolvedor"""
+    return {
+        'name': "Deyvid Santos Luz",
+        'role': "CEO & Desenvolvedor Principal",
+        'company': "deyv's company",
+        'email': "suportdeyvid@gmail.com",
+        'expertise': ["Python", "Flask", "Sistemas Financeiros", "SQL", "JavaScript"],
+        'bio': "Desenvolvedor full-stack especializado em sistemas financeiros e aplicações web empresariais."
+    }
 
 # ===== FUNÇÕES AUXILIARES =====
 
@@ -133,6 +158,19 @@ def init_db():
             )
         ''')
         
+        # Tabela de notificações
+        cursor.execute(f'''
+            CREATE TABLE IF NOT EXISTS notifications (
+                id {'SERIAL PRIMARY KEY' if DB_TYPE == 'postgresql' else 'INTEGER PRIMARY KEY AUTOINCREMENT'},
+                user_id INTEGER NOT NULL,
+                title VARCHAR(255) NOT NULL,
+                message TEXT,
+                type VARCHAR(20) DEFAULT 'info',
+                is_read BOOLEAN DEFAULT FALSE,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
         conn.commit()
         
         # Verificar usuário admin
@@ -200,6 +238,20 @@ def format_currency(value):
     except:
         return f"R$ {float(value or 0):.2f}"
 
+def create_notification(user_id, title, message, type='info'):
+    """Criar nova notificação"""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    placeholder = sql_placeholder()
+    
+    execute_sql(cursor, f'''
+        INSERT INTO notifications (user_id, title, message, type)
+        VALUES ({placeholder}, {placeholder}, {placeholder}, {placeholder})
+    ''', (user_id, title, message, type))
+    
+    conn.commit()
+    conn.close()
+
 # ===== ROTAS PRINCIPAIS =====
 
 @app.route('/')
@@ -207,7 +259,12 @@ def index():
     """Página inicial"""
     if 'user_id' in session:
         return redirect(url_for('dashboard'))
-    return render_template('index_executivo.html')
+    system_info = get_system_info()
+    developer_info = get_developer_info()
+    return render_template('index_executivo.html', 
+                         system_info=system_info,
+                         developer_info=developer_info,
+                         now=datetime.now())
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -215,13 +272,15 @@ def login():
     if 'user_id' in session:
         return redirect(url_for('dashboard'))
     
+    system_info = get_system_info()
+    
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '')
         
         if not username or not password:
             flash('Preencha todos os campos.', 'danger')
-            return render_template('login_executivo.html')
+            return render_template('login_executivo.html', system_info=system_info)
         
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -241,18 +300,23 @@ def login():
             session['theme'] = user['theme']
             session.permanent = True
             
+            # Criar notificação de login
+            create_notification(user['id'], 'Login realizado', f'Bem-vindo de volta, {user["username"]}!', 'success')
+            
             flash(f'Bem-vindo, {session["full_name"]}!', 'success')
             return redirect(url_for('dashboard'))
         else:
             flash('Credenciais inválidas. Tente novamente.', 'danger')
     
-    return render_template('login_executivo.html')
+    return render_template('login_executivo.html', system_info=system_info)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """Página de registro"""
     if 'user_id' in session:
         return redirect(url_for('dashboard'))
+    
+    system_info = get_system_info()
     
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
@@ -263,15 +327,15 @@ def register():
         
         if not username or not email or not password:
             flash('Preencha todos os campos obrigatórios.', 'danger')
-            return render_template('register_executivo.html')
+            return render_template('register_executivo.html', system_info=system_info)
         
         if password != confirm_password:
             flash('As senhas não coincidem.', 'danger')
-            return render_template('register_executivo.html')
+            return render_template('register_executivo.html', system_info=system_info)
         
         if len(password) < 6:
             flash('A senha deve ter pelo menos 6 caracteres.', 'danger')
-            return render_template('register_executivo.html')
+            return render_template('register_executivo.html', system_info=system_info)
         
         hashed_password = generate_password_hash(password)
         
@@ -315,7 +379,7 @@ def register():
         finally:
             conn.close()
     
-    return render_template('register_executivo.html')
+    return render_template('register_executivo.html', system_info=system_info)
 
 @app.route('/dashboard')
 @login_required
@@ -323,6 +387,8 @@ def dashboard():
     """Dashboard principal"""
     try:
         user_id = session['user_id']
+        system_info = get_system_info()
+        
         conn = get_db_connection()
         cursor = conn.cursor()
         
@@ -392,6 +458,14 @@ def dashboard():
         goals = cursor.fetchall()
         goals_list = [dict(goal) for goal in goals]
         
+        # Notificações não lidas
+        execute_sql(cursor, f'''
+            SELECT COUNT(*) as count FROM notifications 
+            WHERE user_id = {placeholder} AND is_read = FALSE
+        ''', (user_id,))
+        
+        unread_notifications = cursor.fetchone()['count']
+        
         conn.close()
         
         return render_template('dashboard_executivo.html',
@@ -403,7 +477,9 @@ def dashboard():
                              month_balance=month_balance,
                              recent_transactions=recent_transactions_list,
                              goals=goals_list,
+                             unread_notifications=unread_notifications,
                              format_currency=format_currency,
+                             system_info=system_info,
                              now=datetime.now())
         
     except Exception as e:
@@ -419,7 +495,9 @@ def dashboard():
                              month_balance=0,
                              recent_transactions=[],
                              goals=[],
+                             unread_notifications=0,
                              format_currency=format_currency,
+                             system_info=get_system_info(),
                              now=datetime.now())
 
 @app.route('/transactions')
@@ -428,6 +506,7 @@ def transactions():
     """Página de transações"""
     try:
         user_id = session['user_id']
+        system_info = get_system_info()
         
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -461,6 +540,7 @@ def transactions():
                              transactions=transactions_dict,
                              categories=categories_dict,
                              format_currency=format_currency,
+                             system_info=system_info,
                              now=datetime.now())
         
     except Exception as e:
@@ -470,6 +550,7 @@ def transactions():
                              transactions=[],
                              categories=[],
                              format_currency=format_currency,
+                             system_info=get_system_info(),
                              now=datetime.now())
 
 @app.route('/api/add_transaction', methods=['POST'])
@@ -502,6 +583,11 @@ def add_transaction():
         conn.commit()
         conn.close()
         
+        # Criar notificação
+        tipo = "Receita" if trans_type == 'income' else "Despesa"
+        create_notification(user_id, f'Nova {tipo} adicionada', 
+                          f'{tipo} de R$ {amount:.2f} registrada: {description}', 'info')
+        
         return jsonify({'success': True, 'message': 'Transação adicionada!'})
         
     except Exception as e:
@@ -513,6 +599,7 @@ def goals():
     """Página de metas"""
     try:
         user_id = session['user_id']
+        system_info = get_system_info()
         
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -532,6 +619,7 @@ def goals():
         return render_template('metas_executivo.html',
                              goals=goals_dict,
                              format_currency=format_currency,
+                             system_info=system_info,
                              now=datetime.now())
         
     except Exception as e:
@@ -540,6 +628,7 @@ def goals():
         return render_template('metas_executivo.html',
                              goals=[],
                              format_currency=format_currency,
+                             system_info=get_system_info(),
                              now=datetime.now())
 
 @app.route('/profile')
@@ -548,6 +637,8 @@ def profile():
     """Página de perfil"""
     try:
         user_id = session['user_id']
+        system_info = get_system_info()
+        developer_info = get_developer_info()
         
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -557,10 +648,26 @@ def profile():
         user = cursor.fetchone()
         user_dict = dict(user) if user else {}
         
+        # Estatísticas do usuário
+        execute_sql(cursor, f'''
+            SELECT 
+                COUNT(*) as total_transactions,
+                SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as total_income,
+                SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as total_expense
+            FROM transactions 
+            WHERE user_id = {placeholder}
+        ''', (user_id,))
+        
+        stats = cursor.fetchone()
+        
         conn.close()
         
         return render_template('perfil_executivo.html',
                              user=user_dict,
+                             stats=dict(stats) if stats else {},
+                             format_currency=format_currency,
+                             system_info=system_info,
+                             developer_info=developer_info,
                              now=datetime.now())
         
     except Exception as e:
@@ -568,6 +675,10 @@ def profile():
         flash(f'Erro ao carregar perfil: {str(e)}', 'danger')
         return render_template('perfil_executivo.html',
                              user={},
+                             stats={},
+                             format_currency=format_currency,
+                             system_info=get_system_info(),
+                             developer_info=get_developer_info(),
                              now=datetime.now())
     
 @app.route('/api/monthly_data')
@@ -620,22 +731,22 @@ def api_monthly_data():
         
         if DB_TYPE == 'postgresql':
             execute_sql(cursor, f'''
-                SELECT c.name, COALESCE(SUM(t.amount), 0) as total
+                SELECT c.name, c.color, COALESCE(SUM(t.amount), 0) as total
                 FROM transactions t
                 JOIN categories c ON t.category_id = c.id
                 WHERE t.user_id = {placeholder} AND t.type = 'expense'
                 AND TO_CHAR(t.transaction_date, 'YYYY-MM') = {placeholder}
-                GROUP BY c.id, c.name
+                GROUP BY c.id, c.name, c.color
                 ORDER BY total DESC
                 LIMIT 5
             ''', (user_id, current_month))
         else:
             execute_sql(cursor, f'''
-                SELECT c.name, COALESCE(SUM(t.amount), 0) as total
+                SELECT c.name, c.color, COALESCE(SUM(t.amount), 0) as total
                 FROM transactions t
                 JOIN categories c ON t.category_id = c.id
-                WHERE t.user_id = ? AND t.type = 'expense'
-                AND strftime('%Y-%m', t.transaction_date) = ?
+                WHERE t.user_id = {placeholder} AND t.type = 'expense'
+                AND strftime('%Y-%m', t.transaction_date) = {placeholder}
                 GROUP BY c.id
                 ORDER BY total DESC
                 LIMIT 5
@@ -652,6 +763,7 @@ def api_monthly_data():
             'expense': expense_data,
             'categories': {
                 'labels': [cat['name'] for cat in categories],
+                'colors': [cat['color'] for cat in categories],
                 'data': [float(cat['total']) for cat in categories]
             }
         })
@@ -659,10 +771,37 @@ def api_monthly_data():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})    
 
+@app.route('/analytics')
+@login_required
+def analytics():
+    """Página de análises (placeholder)"""
+    system_info = get_system_info()
+    flash('Página de análises em desenvolvimento!', 'info')
+    return render_template('base_executivo.html', 
+                         system_info=system_info,
+                         page_title='Análises',
+                         page_subtitle='Em desenvolvimento')
+
+@app.route('/ai_financeira')
+@login_required
+def ai_financeira():
+    """Página de IA Financeira (placeholder)"""
+    system_info = get_system_info()
+    flash('IA Financeira em desenvolvimento!', 'info')
+    return render_template('base_executivo.html', 
+                         system_info=system_info,
+                         page_title='IA Financeira',
+                         page_subtitle='Em desenvolvimento')
+
 @app.route('/about')
 def about():
     """Página sobre"""
-    return render_template('sobre_executivo.html')
+    system_info = get_system_info()
+    developer_info = get_developer_info()
+    return render_template('sobre_executivo.html', 
+                         system_info=system_info,
+                         developer_info=developer_info,
+                         now=datetime.now())
 
 @app.route('/logout')
 def logout():
@@ -676,9 +815,13 @@ def logout():
 @app.route('/api/health')
 def health():
     """API de saúde do sistema"""
+    system_info = get_system_info()
     return jsonify({
         'status': 'online',
-        'app': 'ContaSmart Pro 2026',
+        'app': 'ContaSmart Pro Executive 2026',
+        'developer': system_info['developer'],
+        'company': system_info['company'],
+        'version': system_info['version'],
         'timestamp': datetime.now().isoformat(),
         'database': DB_TYPE
     })
@@ -725,6 +868,13 @@ def quick_stats():
         ''', (user_id,))
         active_goals = cursor.fetchone()['count']
         
+        # Notificações não lidas
+        execute_sql(cursor, f'''
+            SELECT COUNT(*) as count FROM notifications 
+            WHERE user_id = {placeholder} AND is_read = FALSE
+        ''', (user_id,))
+        unread_notifications = cursor.fetchone()['count']
+        
         conn.close()
         
         return jsonify({
@@ -733,6 +883,7 @@ def quick_stats():
             'month_expense': month_expense,
             'month_balance': month_income - month_expense,
             'active_goals': active_goals,
+            'unread_notifications': unread_notifications,
             'formatted': {
                 'month_income': format_currency(month_income),
                 'month_expense': format_currency(month_expense),
@@ -740,6 +891,79 @@ def quick_stats():
             }
         })
         
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/notifications')
+@login_required
+def api_notifications():
+    """API para notificações"""
+    try:
+        user_id = session['user_id']
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        placeholder = sql_placeholder()
+        
+        execute_sql(cursor, f'''
+            SELECT * FROM notifications 
+            WHERE user_id = {placeholder}
+            ORDER BY created_at DESC
+            LIMIT 10
+        ''', (user_id,))
+        
+        notifications = cursor.fetchall()
+        notifications_list = [dict(n) for n in notifications]
+        
+        # Marcar como lidas
+        execute_sql(cursor, f'''
+            UPDATE notifications 
+            SET is_read = TRUE 
+            WHERE user_id = {placeholder} AND is_read = FALSE
+        ''', (user_id,))
+        
+        conn.commit()
+        conn.close()
+        
+        return jsonify({
+            'success': True,
+            'count': len(notifications_list),
+            'notifications': notifications_list
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/system_report')
+@login_required
+def api_system_report():
+    """API para relatório do sistema"""
+    try:
+        user_id = session['user_id']
+        system_info = get_system_info()
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        placeholder = sql_placeholder()
+        
+        # Estatísticas do usuário
+        execute_sql(cursor, 
+                   f"SELECT COUNT(*) as total FROM transactions WHERE user_id = {placeholder}", 
+                   (user_id,))
+        
+        user_stats = cursor.fetchone()
+        conn.close()
+        
+        report = {
+            'system': system_info,
+            'user_stats': {
+                'total_transactions': user_stats['total'] if user_stats else 0
+            },
+            'generated_at': datetime.now().isoformat(),
+            'report_id': f"CS-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+        }
+        
+        return jsonify({'success': True, 'report': report})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
@@ -751,14 +975,22 @@ if __name__ == '__main__':
     os.makedirs('static/css', exist_ok=True)
     os.makedirs('static/js', exist_ok=True)
     os.makedirs('static/img', exist_ok=True)
+    os.makedirs('database', exist_ok=True)
     
     # Inicializar banco
     init_db()
     
     port = int(os.environ.get('PORT', 5000))
     
+    system_info = get_system_info()
+    
     print("\n" + "="*60)
     print("🚀 CONTASMART PRO EXECUTIVO - SISTEMA FINANCEIRO")
+    print("="*60)
+    print(f"👨‍💻 Desenvolvedor: {system_info['developer']}")
+    print(f"🏢 Empresa: {system_info['company']}")
+    print(f"📧 Contato: {system_info['email']}")
+    print(f"🌐 Versão: {system_info['version']}")
     print("="*60)
     print(f"🌐 Acesse: http://localhost:{port}")
     print(f"📊 Banco de dados: {DB_TYPE}")

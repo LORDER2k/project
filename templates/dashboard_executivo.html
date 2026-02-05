@@ -1,499 +1,687 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - ContaSmart Pro</title>
-    <!-- Bootstrap 5 -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --primary: #0066ff;
-            --secondary: #00ccff;
-            --success: #00ff88;
-            --danger: #ff3366;
-            --warning: #ffcc00;
-            --dark: #1a1a2e;
-            --light: #f8f9fa;
+{% extends "base_executivo.html" %}
+
+{% block title %}Dashboard - ContaSmart Pro{% endblock %}
+{% block page_title %}Dashboard Financeiro{% endblock %}
+{% block page_subtitle %}Visão geral das suas finanças{% endblock %}
+
+{% block breadcrumb %}
+<li><a href="{{ url_for('dashboard') }}">{{ 'Dashboard' }}</a></li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .neon-stats-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        transition: all var(--transition-fast);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .neon-stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+    }
+    
+    .neon-stats-card.income::before {
+        background: linear-gradient(90deg, var(--success-color), #00cc77);
+    }
+    
+    .neon-stats-card.expense::before {
+        background: linear-gradient(90deg, var(--danger-color), #ff0066);
+    }
+    
+    .neon-stats-card.balance::before {
+        background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    }
+    
+    .neon-stats-card.goals::before {
+        background: linear-gradient(90deg, var(--warning-color), #ffaa00);
+    }
+    
+    .neon-stats-card:hover {
+        transform: translateY(-3px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: var(--border-radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .income .stat-icon {
+        background: rgba(0, 255, 136, 0.1);
+        color: var(--success-color);
+    }
+    
+    .expense .stat-icon {
+        background: rgba(255, 51, 102, 0.1);
+        color: var(--danger-color);
+    }
+    
+    .balance .stat-icon {
+        background: rgba(0, 102, 255, 0.1);
+        color: var(--primary-color);
+    }
+    
+    .goals .stat-icon {
+        background: rgba(255, 153, 0, 0.1);
+        color: var(--warning-color);
+    }
+    
+    .stat-value {
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin-bottom: var(--spacing-xs);
+        font-family: var(--font-mono);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .stat-trend {
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-top: var(--spacing-sm);
+    }
+    
+    .positive {
+        color: var(--success-color);
+    }
+    
+    .negative {
+        color: var(--danger-color);
+    }
+    
+    .charts-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .chart-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+    }
+    
+    .chart-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .chart-header h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    
+    .chart-wrapper {
+        height: 300px;
+        position: relative;
+    }
+    
+    .dashboard-section {
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .section-header h2 {
+        font-size: 1.3rem;
+        font-weight: 700;
+    }
+    
+    .no-data {
+        text-align: center;
+        padding: var(--spacing-xl);
+        color: var(--text-muted);
+    }
+    
+    .no-data i {
+        font-size: 3rem;
+        margin-bottom: var(--spacing-md);
+        opacity: 0.5;
+    }
+    
+    .quick-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-md);
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        margin-top: var(--spacing-xl);
+    }
+    
+    .quick-stat-item {
+        text-align: center;
+        padding: var(--spacing-md);
+    }
+    
+    .quick-stat-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-xs);
+        font-family: var(--font-mono);
+    }
+    
+    .quick-stat-label {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+    
+    @media (max-width: 768px) {
+        .charts-container {
+            grid-template-columns: 1fr;
         }
         
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f5f7fb;
+        .stats-grid {
+            grid-template-columns: 1fr;
         }
         
-        .sidebar {
-            background: linear-gradient(135deg, var(--dark), #16213e);
-            color: white;
-            min-height: 100vh;
-            position: fixed;
-            width: 250px;
-            transition: all 0.3s;
+        .quick-stats {
+            grid-template-columns: repeat(2, 1fr);
         }
-        
-        .sidebar .nav-link {
-            color: rgba(255,255,255,0.8);
-            padding: 12px 20px;
-            margin: 5px 10px;
-            border-radius: 8px;
-            transition: all 0.3s;
+    }
+    
+    @media (max-width: 576px) {
+        .quick-stats {
+            grid-template-columns: 1fr;
         }
-        
-        .sidebar .nav-link:hover {
-            background: rgba(255,255,255,0.1);
-            color: white;
-        }
-        
-        .sidebar .nav-link.active {
-            background: var(--primary);
-            color: white;
-        }
-        
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
-            transition: all 0.3s;
-        }
-        
-        .stat-card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
-            border: none;
-        }
-        
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .stat-icon {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            margin-bottom: 15px;
-        }
-        
-        .stat-income { background: linear-gradient(135deg, var(--success), #00cc77); color: white; }
-        .stat-expense { background: linear-gradient(135deg, var(--danger), #ff0066); color: white; }
-        .stat-balance { background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; }
-        .stat-goals { background: linear-gradient(135deg, var(--warning), #ffaa00); color: white; }
-        
-        .chart-container {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-        
-        .alert-card {
-            border-left: 4px solid;
-            border-radius: 8px;
-        }
-        
-        .alert-warning { border-color: var(--warning); }
-        .alert-success { border-color: var(--success); }
-        .alert-info { border-color: var(--primary); }
-        .alert-danger { border-color: var(--danger); }
-        
-        @media (max-width: 768px) {
-            .sidebar {
-                margin-left: -250px;
-            }
-            .sidebar.active {
-                margin-left: 0;
-            }
-            .main-content {
-                margin-left: 0;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-        <div class="p-4">
-            <h3 class="mb-4"><i class="fas fa-chart-line"></i> ContaSmart Pro</h3>
-            <p class="text-muted small mb-0">Bem-vindo, {{ session.full_name }}</p>
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="neon-stats-card income">
+        <div class="stat-icon">
+            <i class="fas fa-money-bill-wave"></i>
         </div>
-        
-        <ul class="nav flex-column">
-            <li class="nav-item">
-                <a class="nav-link active" href="{{ url_for('dashboard') }}">
-                    <i class="fas fa-tachometer-alt me-2"></i> Dashboard
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('transactions') }}">
-                    <i class="fas fa-exchange-alt me-2"></i> Transações
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('goals') }}">
-                    <i class="fas fa-bullseye me-2"></i> Metas
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="#">
-                    <i class="fas fa-chart-pie me-2"></i> Relatórios
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="{{ url_for('profile') }}">
-                    <i class="fas fa-user me-2"></i> Perfil
-                </a>
-            </li>
-            <li class="nav-item mt-4">
-                <a class="nav-link text-danger" href="{{ url_for('logout') }}">
-                    <i class="fas fa-sign-out-alt me-2"></i> Sair
-                </a>
-            </li>
-        </ul>
+        <div class="stat-value">{{ format_currency(total_income) }}</div>
+        <div class="stat-label">Total Receitas</div>
+        <div class="stat-trend">
+            Este mês: <span class="positive">{{ format_currency(month_income) }}</span>
+        </div>
     </div>
     
-    <!-- Main Content -->
-    <div class="main-content">
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2><i class="fas fa-tachometer-alt me-2"></i> Dashboard Financeiro</h2>
-            <div>
-                <span class="badge bg-success me-2">Online</span>
-                <span class="text-muted">{{ now.strftime('%d/%m/%Y %H:%M') }}</span>
+    <div class="neon-stats-card expense">
+        <div class="stat-icon">
+            <i class="fas fa-shopping-cart"></i>
+        </div>
+        <div class="stat-value">{{ format_currency(total_expense) }}</div>
+        <div class="stat-label">Total Despesas</div>
+        <div class="stat-trend">
+            Este mês: <span class="negative">{{ format_currency(month_expense) }}</span>
+        </div>
+    </div>
+    
+    <div class="neon-stats-card balance">
+        <div class="stat-icon">
+            <i class="fas fa-wallet"></i>
+        </div>
+        <div class="stat-value">{{ format_currency(balance) }}</div>
+        <div class="stat-label">Saldo Atual</div>
+        <div class="stat-trend">
+            Este mês: <span class="{{ 'positive' if month_balance >= 0 else 'negative' }}">
+                {{ format_currency(month_balance) }}
+            </span>
+        </div>
+    </div>
+    
+    <div class="neon-stats-card goals">
+        <div class="stat-icon">
+            <i class="fas fa-bullseye"></i>
+        </div>
+        <div class="stat-value">{{ goals|length }}</div>
+        <div class="stat-label">Metas Ativas</div>
+        <div class="stat-trend">
+            <a href="{{ url_for('goals') }}" class="neon-btn sm outline" style="margin-top: 5px;">
+                Gerenciar Metas
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2><i class="fas fa-chart-line"></i> Análises Gráficas</h2>
+        <button class="neon-btn sm outline" onclick="refreshCharts()">
+            <i class="fas fa-sync-alt"></i> Atualizar
+        </button>
+    </div>
+    
+    <div class="charts-container">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Tendência Mensal</h3>
+                <span class="neon-badge">Últimos 6 meses</span>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="monthlyChart"></canvas>
             </div>
         </div>
         
-        <!-- Flash Messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Categorias de Despesas</h3>
+                <span class="neon-badge">Este mês</span>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="categoryChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Transactions -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2><i class="fas fa-history"></i> Transações Recentes</h2>
+        <a href="{{ url_for('transactions') }}" class="neon-btn sm">
+            <i class="fas fa-eye"></i> Ver Todas
+        </a>
+    </div>
+    
+    {% if recent_transactions %}
+    <div class="neon-table-wrapper">
+        <table class="neon-table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Descrição</th>
+                    <th>Categoria</th>
+                    <th class="text-right">Valor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for trans in recent_transactions[:5] %}
+                <tr>
+                    <td class="date">{{ trans.transaction_date }}</td>
+                    <td>
+                        <div class="transaction-title">{{ trans.description or 'Sem descrição' }}</div>
+                    </td>
+                    <td>
+                        <span class="neon-badge" style="background-color: {{ trans.category_color or '#0066ff' }}20; border-color: {{ trans.category_color or '#0066ff' }}; color: {{ trans.category_color or '#0066ff' }};">
+                            {{ trans.category_name or 'Sem categoria' }}
+                        </span>
+                    </td>
+                    <td class="text-right amount {{ trans.type }}">
+                        {% if trans.type == 'income' %}+{% else %}-{% endif %}
+                        {{ format_currency(trans.amount) }}
+                    </td>
+                </tr>
                 {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="no-data">
+        <i class="fas fa-receipt"></i>
+        <h3>Nenhuma transação encontrada</h3>
+        <p>Adicione sua primeira transação para começar</p>
+        <button class="neon-btn primary" onclick="showAddTransactionModal()" style="margin-top: var(--spacing-md);">
+            <i class="fas fa-plus"></i> Nova Transação
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Goals Section -->
+<div class="dashboard-section">
+    <div class="section-header">
+        <h2><i class="fas fa-bullseye"></i> Metas em Destaque</h2>
+        <a href="{{ url_for('goals') }}" class="neon-btn sm">
+            <i class="fas fa-plus"></i> Nova Meta
+        </a>
+    </div>
+    
+    {% if goals %}
+    <div class="dashboard-grid">
+        {% for goal in goals[:3] %}
+        <div class="neon-card">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--spacing-md);">
+                <h3 class="goal-title">{{ goal.title }}</h3>
+                <span class="neon-badge {% if goal.priority == 'high' %}danger{% elif goal.priority == 'medium' %}warning{% else %}primary{% endif %}">
+                    {{ goal.priority|title }}
+                </span>
+            </div>
+            
+            {% if goal.description %}
+            <p class="goal-description">{{ goal.description }}</p>
             {% endif %}
-        {% endwith %}
-        
-        <!-- Stats Cards -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <div class="stat-icon stat-income">
-                        <i class="fas fa-money-bill-wave"></i>
-                    </div>
-                    <h4 class="mb-1">{{ format_currency(total_income) }}</h4>
-                    <p class="text-muted mb-0">Total Receitas</p>
+            
+            <!-- Progress Bar -->
+            {% set progress = (goal.current_amount / goal.target_amount * 100) if goal.target_amount > 0 else 0 %}
+            <div style="margin: var(--spacing-md) 0;">
+                <div class="neon-progress">
+                    <div class="neon-progress-bar {% if progress >= 75 %}success{% elif progress >= 50 %}warning{% else %}danger{% endif %}" 
+                         style="width: {{ progress }}%"></div>
                 </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <div class="stat-icon stat-expense">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                    <h4 class="mb-1">{{ format_currency(total_expense) }}</h4>
-                    <p class="text-muted mb-0">Total Despesas</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <div class="stat-icon stat-balance">
-                        <i class="fas fa-wallet"></i>
-                    </div>
-                    <h4 class="mb-1">{{ format_currency(balance) }}</h4>
-                    <p class="text-muted mb-0">Saldo Atual</p>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <div class="stat-icon stat-goals">
-                        <i class="fas fa-bullseye"></i>
-                    </div>
-                    <h4 class="mb-1">{{ goals|length }}</h4>
-                    <p class="text-muted mb-0">Metas Ativas</p>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Charts Row -->
-        <div class="row mb-4">
-            <div class="col-md-8">
-                <div class="chart-container">
-                    <h5 class="mb-3"><i class="fas fa-chart-line me-2"></i> Tendência Mensal</h5>
-                    <canvas id="monthlyChart"></canvas>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="chart-container">
-                    <h5 class="mb-3"><i class="fas fa-chart-pie me-2"></i> Categorias (Este Mês)</h5>
-                    <canvas id="categoryChart"></canvas>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Recent Transactions & Goals -->
-        <div class="row">
-            <div class="col-md-7">
-                <div class="chart-container">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0"><i class="fas fa-history me-2"></i> Transações Recentes</h5>
-                        <a href="{{ url_for('transactions') }}" class="btn btn-sm btn-primary">
-                            Ver Todas <i class="fas fa-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                    
-                    {% if recent_transactions %}
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Data</th>
-                                        <th>Descrição</th>
-                                        <th>Categoria</th>
-                                        <th class="text-end">Valor</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for trans in recent_transactions[:5] %}
-                                    <tr>
-                                        <td>{{ trans.transaction_date }}</td>
-                                        <td>{{ trans.description or 'Sem descrição' }}</td>
-                                        <td>
-                                            <span class="badge" style="background-color: {{ trans.category_color or '#0066ff' }}">
-                                                {{ trans.category_name or 'Sem categoria' }}
-                                            </span>
-                                        </td>
-                                        <td class="text-end {% if trans.type == 'income' %}text-success{% else %}text-danger{% endif %}">
-                                            {% if trans.type == 'income' %}+{% else %}-{% endif %}
-                                            {{ format_currency(trans.amount) }}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">Nenhuma transação registrada</p>
-                            <a href="{{ url_for('transactions') }}" class="btn btn-primary">
-                                <i class="fas fa-plus me-1"></i> Adicionar Transação
-                            </a>
-                        </div>
-                    {% endif %}
+                <div style="display: flex; justify-content: space-between; margin-top: var(--spacing-xs);">
+                    <span class="text-muted" style="font-size: 0.85rem;">
+                        {{ format_currency(goal.current_amount) }} de {{ format_currency(goal.target_amount) }}
+                    </span>
+                    <span class="text-muted" style="font-size: 0.85rem;">
+                        {{ progress|round(1) }}%
+                    </span>
                 </div>
             </div>
             
-            <div class="col-md-5">
-                <div class="chart-container">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="mb-0"><i class="fas fa-bullseye me-2"></i> Metas em Destaque</h5>
-                        <a href="{{ url_for('goals') }}" class="btn btn-sm btn-primary">
-                            Ver Todas <i class="fas fa-arrow-right ms-1"></i>
-                        </a>
-                    </div>
-                    
-                    {% if goals %}
-                        {% for goal in goals[:3] %}
-                        <div class="card mb-3 border-0 shadow-sm">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="mb-0">{{ goal.title }}</h6>
-                                    <span class="badge bg-{% if goal.priority == 'high' %}danger{% elif goal.priority == 'medium' %}warning{% else %}info{% endif %}">
-                                        {{ goal.priority }}
-                                    </span>
-                                </div>
-                                <p class="text-muted small mb-2">{{ goal.description or 'Sem descrição' }}</p>
-                                
-                                <!-- Progress Bar -->
-                                {% set progress = (goal.current_amount / goal.target_amount * 100) if goal.target_amount > 0 else 0 %}
-                                <div class="progress mb-2" style="height: 8px;">
-                                    <div class="progress-bar bg-success" role="progressbar" 
-                                         style="width: {{ progress }}%"
-                                         aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100">
-                                    </div>
-                                </div>
-                                
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">
-                                        {{ format_currency(goal.current_amount) }} de {{ format_currency(goal.target_amount) }}
-                                    </small>
-                                    <small class="text-muted">
-                                        {% if goal.deadline %}
-                                            {{ goal.deadline }}
-                                        {% endif %}
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    {% else %}
-                        <div class="text-center py-4">
-                            <i class="fas fa-bullseye fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">Nenhuma meta definida</p>
-                            <button class="btn btn-primary" onclick="showAddGoalModal()">
-                                <i class="fas fa-plus me-1"></i> Criar Meta
-                            </button>
-                        </div>
-                    {% endif %}
-                </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: var(--spacing-md);">
+                {% if goal.deadline %}
+                <span class="date" style="font-size: 0.85rem;">
+                    <i class="fas fa-calendar-alt"></i> {{ goal.deadline }}
+                </span>
+                {% endif %}
+                
+                {% if not goal.is_completed %}
+                <button class="neon-btn sm outline" onclick="updateGoalProgress({{ goal.id }})">
+                    <i class="fas fa-plus"></i> Adicionar
+                </button>
+                {% endif %}
             </div>
         </div>
-        
-        <!-- Quick Stats -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="chart-container">
-                    <div class="row text-center">
-                        <div class="col-md-3">
-                            <h4 class="text-success">{{ format_currency(month_income) }}</h4>
-                            <p class="text-muted mb-0">Receitas (Mês)</p>
-                        </div>
-                        <div class="col-md-3">
-                            <h4 class="text-danger">{{ format_currency(month_expense) }}</h4>
-                            <p class="text-muted mb-0">Despesas (Mês)</p>
-                        </div>
-                        <div class="col-md-3">
-                            <h4 class="text-primary">{{ format_currency(month_balance) }}</h4>
-                            <p class="text-muted mb-0">Saldo (Mês)</p>
-                        </div>
-                        <div class="col-md-3">
-                            <h4 class="text-warning">{{ recent_transactions|length }}</h4>
-                            <p class="text-muted mb-0">Transações Totais</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        {% endfor %}
     </div>
+    {% else %}
+    <div class="no-data">
+        <i class="fas fa-bullseye"></i>
+        <h3>Nenhuma meta definida</h3>
+        <p>Crie metas para acompanhar seus objetivos financeiros</p>
+        <a href="{{ url_for('goals') }}" class="neon-btn primary" style="margin-top: var(--spacing-md);">
+            <i class="fas fa-plus"></i> Criar Primeira Meta
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Quick Stats -->
+<div class="quick-stats">
+    <div class="quick-stat-item">
+        <div class="quick-stat-value text-success">{{ format_currency(month_income) }}</div>
+        <div class="quick-stat-label">Receitas (Mês)</div>
+    </div>
+    <div class="quick-stat-item">
+        <div class="quick-stat-value text-danger">{{ format_currency(month_expense) }}</div>
+        <div class="quick-stat-label">Despesas (Mês)</div>
+    </div>
+    <div class="quick-stat-item">
+        <div class="quick-stat-value text-primary">{{ format_currency(month_balance) }}</div>
+        <div class="quick-stat-label">Saldo (Mês)</div>
+    </div>
+    <div class="quick-stat-item">
+        <div class="quick-stat-value text-warning">{{ recent_transactions|length }}</div>
+        <div class="quick-stat-label">Transações Totais</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let monthlyChart = null;
+    let categoryChart = null;
     
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadChartData();
+        startAutoRefresh();
+    });
     
-    <script>
-        // Gráfico de Tendência Mensal
-        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
-        const monthlyChart = new Chart(monthlyCtx, {
+    async function loadChartData() {
+        try {
+            const response = await fetch('/api/monthly_data');
+            const data = await response.json();
+            
+            if (data.success) {
+                renderMonthlyChart(data.months, data.income, data.expense);
+                renderCategoryChart(data.categories.labels, data.categories.data, data.categories.colors);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar dados dos gráficos:', error);
+        }
+    }
+    
+    function renderMonthlyChart(months, incomeData, expenseData) {
+        const ctx = document.getElementById('monthlyChart').getContext('2d');
+        
+        if (monthlyChart) {
+            monthlyChart.destroy();
+        }
+        
+        monthlyChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun'],
-                datasets: [{
-                    label: 'Receitas',
-                    data: [3000, 4200, 3800, 5100, 4900, 5500],
-                    borderColor: '#00ff88',
-                    backgroundColor: 'rgba(0, 255, 136, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }, {
-                    label: 'Despesas',
-                    data: [2800, 3100, 2900, 3500, 4200, 3800],
-                    borderColor: '#ff3366',
-                    backgroundColor: 'rgba(255, 51, 102, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }]
+                labels: months,
+                datasets: [
+                    {
+                        label: 'Receitas',
+                        data: incomeData,
+                        borderColor: '#00ff88',
+                        backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 2
+                    },
+                    {
+                        label: 'Despesas',
+                        data: expenseData,
+                        borderColor: '#ff3366',
+                        backgroundColor: 'rgba(255, 51, 102, 0.1)',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 2
+                    }
+                ]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
                         position: 'top',
+                        labels: {
+                            color: 'var(--text-primary)',
+                            padding: 20
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: R$ ${context.parsed.y.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+                            }
+                        }
                     }
                 },
                 scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'var(--text-secondary)'
+                        }
+                    },
                     y: {
                         beginAtZero: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
                         ticks: {
+                            color: 'var(--text-secondary)',
                             callback: function(value) {
                                 return 'R$ ' + value.toLocaleString('pt-BR');
                             }
                         }
                     }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'nearest'
                 }
             }
         });
+    }
+    
+    function renderCategoryChart(labels, data, colors) {
+        const ctx = document.getElementById('categoryChart').getContext('2d');
         
-        // Gráfico de Categorias
-        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-        const categoryChart = new Chart(categoryCtx, {
+        if (categoryChart) {
+            categoryChart.destroy();
+        }
+        
+        categoryChart = new Chart(ctx, {
             type: 'doughnut',
             data: {
-                labels: ['Alimentação', 'Transporte', 'Moradia', 'Lazer', 'Outros'],
+                labels: labels,
                 datasets: [{
-                    data: [25, 20, 30, 15, 10],
-                    backgroundColor: [
-                        '#ff3366',
-                        '#ff9900',
-                        '#ff0066',
-                        '#00ccff',
-                        '#9966ff'
+                    data: data,
+                    backgroundColor: colors || [
+                        '#ff3366', '#ff9900', '#ff0066', '#00ccff', '#9966ff',
+                        '#00ff88', '#9d00ff', '#ffcc00', '#00ffff', '#3399ff'
                     ],
-                    borderWidth: 2
+                    borderWidth: 2,
+                    borderColor: 'var(--bg-card)'
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        position: 'bottom',
-                    }
-                }
-            }
-        });
-        
-        // Atualizar dados em tempo real
-        function updateDashboard() {
-            fetch('/api/quick_stats')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Atualizar cards com dados reais
-                        document.querySelectorAll('.stat-card h4')[0].textContent = data.formatted.month_income;
-                        document.querySelectorAll('.stat-card h4')[1].textContent = data.formatted.month_expense;
-                        document.querySelectorAll('.stat-card h4')[2].textContent = data.formatted.month_balance;
-                        
-                        // Atualizar gráfico mensal com dados reais (se disponível)
-                        if (data.monthly_data) {
-                            monthlyChart.data.datasets[0].data = data.monthly_data.income;
-                            monthlyChart.data.datasets[1].data = data.monthly_data.expense;
-                            monthlyChart.update();
+                        position: 'right',
+                        labels: {
+                            color: 'var(--text-primary)',
+                            padding: 20,
+                            font: {
+                                size: 11
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} (${percentage}%)`;
+                            }
                         }
                     }
-                })
-                .catch(error => console.log('Erro ao atualizar dashboard:', error));
+                },
+                cutout: '60%'
+            }
+        });
+    }
+    
+    function refreshCharts() {
+        const btn = document.querySelector('[onclick="refreshCharts()"]');
+        const originalHTML = btn.innerHTML;
+        
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Atualizando...';
+        btn.disabled = true;
+        
+        loadChartData().finally(() => {
+            setTimeout(() => {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                
+                // Mostrar notificação de sucesso
+                showToast('Gráficos atualizados com sucesso!', 'success');
+            }, 500);
+        });
+    }
+    
+    function startAutoRefresh() {
+        // Atualizar dados a cada 30 segundos
+        setInterval(() => {
+            loadChartData();
+        }, 30000);
+    }
+    
+    function showToast(message, type = 'info') {
+        // Criar elemento de toast
+        const toast = document.createElement('div');
+        toast.className = `flash-message flash-${type}`;
+        toast.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-circle' : type === 'danger' ? 'times-circle' : 'info-circle'}"></i>
+            ${message}
+            <button class="flash-close"><i class="fas fa-times"></i></button>
+        `;
+        
+        // Adicionar ao container de flash messages
+        const container = document.querySelector('.flash-messages');
+        if (!container) {
+            // Criar container se não existir
+            const newContainer = document.createElement('div');
+            newContainer.className = 'flash-messages';
+            document.querySelector('.executive-main').insertBefore(newContainer, document.querySelector('.content-wrapper'));
+            newContainer.appendChild(toast);
+        } else {
+            container.appendChild(toast);
         }
         
-        // Atualizar a cada 30 segundos
-        setInterval(updateDashboard, 30000);
+        // Adicionar funcionalidade de fechar
+        toast.querySelector('.flash-close').addEventListener('click', () => {
+            toast.remove();
+        });
         
-        // Inicializar
-        updateDashboard();
+        // Auto-remover após 3 segundos
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+    
+    async function updateGoalProgress(goalId) {
+        const amount = prompt('Quanto deseja adicionar para esta meta?');
         
-        // Mobile menu toggle
-        function toggleSidebar() {
-            document.querySelector('.sidebar').classList.toggle('active');
+        if (amount && !isNaN(amount) && parseFloat(amount) > 0) {
+            try {
+                // Aqui você precisaria implementar a API para atualizar a meta
+                showToast('Funcionalidade em desenvolvimento!', 'info');
+            } catch (error) {
+                console.error('Erro ao atualizar meta:', error);
+                showToast('Erro ao atualizar meta', 'danger');
+            }
         }
-        
-        // Se estiver em mobile, adicionar botão de menu
-        if (window.innerWidth < 768) {
-            const menuBtn = document.createElement('button');
-            menuBtn.className = 'btn btn-primary position-fixed bottom-0 end-0 m-3 rounded-circle';
-            menuBtn.style.width = '50px';
-            menuBtn.style.height = '50px';
-            menuBtn.style.zIndex = '1000';
-            menuBtn.innerHTML = '<i class="fas fa-bars"></i>';
-            menuBtn.onclick = toggleSidebar;
-            document.body.appendChild(menuBtn);
-        }
-    </script>
-</body>
-</html>
+    }
+</script>
+{% endblock %}

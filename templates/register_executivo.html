@@ -1,189 +1,603 @@
-{% extends "base_futuristic.html" %}
-
-{% block title %}Registro - ContaSmart Pro Futuristic{% endblock %}
-
-{% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="glass-card neon-border p-5 mt-4 animate-slide-up">
-                <!-- Logo -->
-                <div class="text-center mb-4">
-                    <h1 class="neon-text display-4">
-                        <i class="fas fa-user-plus"></i>
-                    </h1>
-                    <h2 class="neon-text mb-3">Criar Conta</h2>
-                    <p class="text-muted">Junte-se à revolução financeira</p>
-                </div>
-                
-                <!-- Formulário de Registro -->
-                <form method="POST" action="{{ url_for('register') }}">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label neon-text">Usuário</label>
-                            <div class="input-group">
-                                <span class="input-group-text neon-border">
-                                    <i class="fas fa-user"></i>
-                                </span>
-                                <input type="text" class="form-control neon-input" name="username" 
-                                       placeholder="Escolha um usuário" required>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label neon-text">Email</label>
-                            <div class="input-group">
-                                <span class="input-group-text neon-border">
-                                    <i class="fas fa-envelope"></i>
-                                </span>
-                                <input type="email" class="form-control neon-input" name="email" 
-                                       placeholder="seu@email.com" required>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label neon-text">Senha</label>
-                            <div class="input-group">
-                                <span class="input-group-text neon-border">
-                                    <i class="fas fa-lock"></i>
-                                </span>
-                                <input type="password" class="form-control neon-input" name="password" 
-                                       placeholder="Digite sua senha" required>
-                            </div>
-                        </div>
-                        
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label neon-text">Confirmar Senha</label>
-                            <div class="input-group">
-                                <span class="input-group-text neon-border">
-                                    <i class="fas fa-lock"></i>
-                                </span>
-                                <input type="password" class="form-control neon-input" name="confirm_password" 
-                                       placeholder="Confirme sua senha" required>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="terms" required>
-                            <label class="form-check-label text-muted" for="terms">
-                                Concordo com os 
-                                <a href="#" class="neon-text text-decoration-none">Termos de Serviço</a>
-                                e 
-                                <a href="#" class="neon-text text-decoration-none">Política de Privacidade</a>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <button type="submit" class="neon-btn neon-btn-primary w-100 mb-3">
-                        <i class="fas fa-rocket me-2"></i>Criar Minha Conta
-                    </button>
-                    
-                    <div class="text-center">
-                        <a href="{{ url_for('login') }}" class="text-decoration-none neon-text">
-                            <i class="fas fa-sign-in-alt me-1"></i>Já tenho uma conta
-                        </a>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
 {% extends "base_executivo.html" %}
 
 {% block title %}Registro - ContaSmart Pro{% endblock %}
-{% block page_title %}Criar Conta Executiva{% endblock %}
-{% block page_subtitle %}Cadastre-se para acessar o sistema de gestão financeira avançada{% endblock %}
+{% block page_title %}Criar Nova Conta{% endblock %}
+{% block page_subtitle %}Junte-se ao nosso sistema financeiro{% endblock %}
 
 {% block breadcrumb %}
-<li><a href="#">Registro</a></li>
+<li><a href="{{ url_for('register') }}">{{ 'Registro' }}</a></li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .register-container {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: var(--spacing-xl) 0;
+    }
+    
+    .register-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-xl);
+        box-shadow: var(--shadow-lg);
+    }
+    
+    .register-header {
+        text-align: center;
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .register-logo {
+        width: 70px;
+        height: 70px;
+        margin: 0 auto var(--spacing-lg);
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        border-radius: var(--border-radius-md);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+    }
+    
+    .register-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .register-subtitle {
+        color: var(--text-muted);
+        font-size: 0.95rem;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .form-group {
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+    
+    .form-label {
+        display: block;
+        margin-bottom: var(--spacing-sm);
+        color: var(--text-secondary);
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+    
+    .form-label.required::after {
+        content: ' *';
+        color: var(--danger-color);
+    }
+    
+    .form-input {
+        width: 100%;
+        padding: 12px 16px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-md);
+        color: var(--text-primary);
+        font-size: 0.95rem;
+        transition: all var(--transition-fast);
+    }
+    
+    .form-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+    }
+    
+    .form-input.error {
+        border-color: var(--danger-color);
+    }
+    
+    .error-message {
+        color: var(--danger-color);
+        font-size: 0.85rem;
+        margin-top: 5px;
+        display: none;
+    }
+    
+    .password-strength {
+        margin-top: 8px;
+        height: 4px;
+        background: var(--bg-tertiary);
+        border-radius: 2px;
+        overflow: hidden;
+    }
+    
+    .password-strength-bar {
+        height: 100%;
+        width: 0%;
+        transition: width 0.3s ease, background-color 0.3s ease;
+    }
+    
+    .password-strength-text {
+        font-size: 0.8rem;
+        margin-top: 4px;
+        color: var(--text-muted);
+    }
+    
+    .password-requirements {
+        background: var(--bg-tertiary);
+        border-radius: var(--border-radius-md);
+        padding: var(--spacing-md);
+        margin-top: var(--spacing-md);
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+    
+    .password-requirements ul {
+        padding-left: 20px;
+        margin-bottom: 0;
+    }
+    
+    .password-requirements li {
+        margin-bottom: 4px;
+    }
+    
+    .password-requirements li.valid {
+        color: var(--success-color);
+    }
+    
+    .password-requirements li.valid::before {
+        content: '✓ ';
+    }
+    
+    .register-footer {
+        text-align: center;
+        margin-top: var(--spacing-xl);
+        padding-top: var(--spacing-lg);
+        border-top: 1px solid var(--border-color);
+        color: var(--text-muted);
+        font-size: 0.9rem;
+    }
+    
+    .register-benefits {
+        background: var(--bg-tertiary);
+        border-radius: var(--border-radius-md);
+        padding: var(--spacing-lg);
+        margin-top: var(--spacing-xl);
+        border: 1px solid var(--border-color);
+    }
+    
+    .register-benefits h4 {
+        margin-bottom: var(--spacing-md);
+        font-size: 1.1rem;
+    }
+    
+    .benefits-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-md);
+    }
+    
+    .benefit-item {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+    
+    .benefit-icon {
+        color: var(--primary-color);
+        font-size: 1.2rem;
+        margin-top: 2px;
+    }
+    
+    .benefit-text h5 {
+        font-size: 0.9rem;
+        margin-bottom: 2px;
+    }
+    
+    .benefit-text p {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+    }
+    
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+        }
+        
+        .benefits-list {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .register-container {
+            padding: var(--spacing-lg);
+        }
+        
+        .register-card {
+            padding: var(--spacing-lg);
+        }
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="auth-container" style="max-width: 500px; margin: 0 auto; padding: var(--spacing-xl) 0;">
-    <div class="neon-card" style="padding: var(--spacing-xl);">
-        <div style="text-align: center; margin-bottom: var(--spacing-xl);">
-            <div class="logo-icon" style="width: 60px; height: 60px; margin: 0 auto var(--spacing-lg);">
-                <i class="fas fa-chart-network" style="font-size: 2rem;"></i>
+<div class="register-container">
+    <div class="register-card">
+        <div class="register-header">
+            <div class="register-logo">
+                <i class="fas fa-user-plus"></i>
             </div>
-            <h2 style="margin-bottom: var(--spacing-sm);">Conta Executiva</h2>
-            <p style="color: var(--text-muted);">Crie sua conta para acessar o sistema completo</p>
+            <h2 class="register-title">Criar Conta</h2>
+            <p class="register-subtitle">
+                Preencha os dados abaixo para criar sua conta no ContaSmart Pro Executive
+            </p>
         </div>
         
-        <form method="POST" action="{{ url_for('register') }}">
-            <div class="form-group">
-                <label class="form-label">Nome Completo</label>
-                <input type="text" name="full_name" class="form-control" placeholder="Digite seu nome completo">
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Nome de Usuário *</label>
-                <input type="text" name="username" class="form-control" placeholder="Escolha um nome de usuário" required>
-                <small style="color: var(--text-muted); font-size: 0.85rem;">Este será seu identificador no sistema</small>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Email *</label>
-                <input type="email" name="email" class="form-control" placeholder="seu@email.com" required>
-            </div>
-            
-            <div class="form-row">
+        <form action="{{ url_for('register') }}" method="POST" id="registerForm">
+            <div class="form-grid">
                 <div class="form-group">
-                    <label class="form-label">Senha *</label>
-                    <input type="password" name="password" class="form-control" placeholder="Mínimo 6 caracteres" required>
+                    <label class="form-label required" for="username">
+                        <i class="fas fa-user me-2"></i>Nome de Usuário
+                    </label>
+                    <input type="text" 
+                           class="form-input" 
+                           id="username" 
+                           name="username" 
+                           required 
+                           placeholder="ex: joao.silva"
+                           minlength="3"
+                           maxlength="50"
+                           value="{{ request.form.username if request.form }}">
+                    <div class="error-message" id="usernameError"></div>
                 </div>
                 
                 <div class="form-group">
-                    <label class="form-label">Confirmar Senha *</label>
-                    <input type="password" name="confirm_password" class="form-control" placeholder="Digite a senha novamente" required>
+                    <label class="form-label" for="full_name">
+                        <i class="fas fa-id-card me-2"></i>Nome Completo
+                    </label>
+                    <input type="text" 
+                           class="form-input" 
+                           id="full_name" 
+                           name="full_name" 
+                           placeholder="ex: João da Silva"
+                           value="{{ request.form.full_name if request.form }}">
                 </div>
             </div>
             
-            <div style="margin-bottom: var(--spacing-lg);">
-                <label style="display: flex; align-items: flex-start; gap: var(--spacing-sm); cursor: pointer;">
-                    <input type="checkbox" name="terms" required style="margin-top: 3px; accent-color: var(--primary-color);">
-                    <span style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.4;">
-                        Concordo com os <a href="#" style="color: var(--primary-color);">Termos de Uso</a> e 
-                        <a href="#" style="color: var(--primary-color);">Política de Privacidade</a> do sistema
-                    </span>
+            <div class="form-group">
+                <label class="form-label required" for="email">
+                    <i class="fas fa-envelope me-2"></i>Email
                 </label>
+                <input type="email" 
+                       class="form-input" 
+                       id="email" 
+                       name="email" 
+                       required 
+                       placeholder="ex: joao@email.com"
+                       value="{{ request.form.email if request.form }}">
+                <div class="error-message" id="emailError"></div>
             </div>
             
-            <button type="submit" class="neon-btn primary" style="width: 100%; padding: 12px;">
-                <i class="fas fa-user-plus"></i>
-                Criar Conta Executiva
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label required" for="password">
+                        <i class="fas fa-lock me-2"></i>Senha
+                    </label>
+                    <input type="password" 
+                           class="form-input" 
+                           id="password" 
+                           name="password" 
+                           required 
+                           placeholder="Mínimo 6 caracteres"
+                           minlength="6">
+                    <div class="password-strength">
+                        <div class="password-strength-bar" id="passwordStrengthBar"></div>
+                    </div>
+                    <div class="password-strength-text" id="passwordStrengthText"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label required" for="confirm_password">
+                        <i class="fas fa-lock me-2"></i>Confirmar Senha
+                    </label>
+                    <input type="password" 
+                           class="form-input" 
+                           id="confirm_password" 
+                           name="confirm_password" 
+                           required 
+                           placeholder="Digite novamente">
+                    <div class="error-message" id="confirmPasswordError"></div>
+                </div>
+            </div>
+            
+            <div class="password-requirements" id="passwordRequirements">
+                <h5 style="margin-bottom: var(--spacing-sm); font-size: 0.9rem;">Requisitos da senha:</h5>
+                <ul>
+                    <li id="reqLength">Mínimo 6 caracteres</li>
+                    <li id="reqUppercase">Pelo menos uma letra maiúscula</li>
+                    <li id="reqLowercase">Pelo menos uma letra minúscula</li>
+                    <li id="reqNumber">Pelo menos um número</li>
+                </ul>
+            </div>
+            
+            <div class="form-group" style="margin-top: var(--spacing-xl);">
+                <label class="form-label">
+                    <input type="checkbox" name="terms" required style="margin-right: 8px;">
+                    Eu concordo com os 
+                    <a href="#" style="color: var(--primary-color);">Termos de Serviço</a> e 
+                    <a href="#" style="color: var(--primary-color);">Política de Privacidade</a>
+                </label>
+                <div class="error-message" id="termsError"></div>
+            </div>
+            
+            <button type="submit" class="neon-btn primary w-100" style="padding: 14px; margin-top: var(--spacing-lg);">
+                <i class="fas fa-user-plus me-2"></i> Criar Minha Conta
             </button>
         </form>
         
-        <div style="text-align: center; margin-top: var(--spacing-xl); padding-top: var(--spacing-lg); border-top: 1px solid var(--border-color);">
-            <p style="color: var(--text-muted); margin-bottom: var(--spacing-md);">
-                Já tem uma conta executiva?
-            </p>
-            <a href="{{ url_for('login') }}" class="neon-btn outline" style="width: 100%;">
-                <i class="fas fa-sign-in-alt"></i>
-                Fazer Login
-            </a>
-        </div>
-        
-        <div style="margin-top: var(--spacing-lg); text-align: center;">
-            <a href="{{ url_for('index') }}" style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem;">
-                <i class="fas fa-arrow-left"></i>
-                Voltar para página inicial
-            </a>
+        <div class="register-footer">
+            <p>Já tem uma conta?</p>
+            <div style="display: flex; gap: var(--spacing-lg); justify-content: center; margin-top: var(--spacing-md);">
+                <a href="{{ url_for('login') }}" class="neon-btn outline sm">
+                    <i class="fas fa-sign-in-alt me-1"></i> Fazer Login
+                </a>
+                <a href="{{ url_for('index') }}" class="neon-btn sm">
+                    <i class="fas fa-home me-1"></i> Voltar ao Início
+                </a>
+            </div>
         </div>
     </div>
     
-    <div style="text-align: center; margin-top: var(--spacing-lg); color: var(--text-muted); font-size: 0.85rem;">
-        <p>
-            <i class="fas fa-rocket"></i> Comece agora sua gestão financeira • 
-            <i class="fas fa-chart-line"></i> Análises avançadas • 
-            <i class="fas fa-robot"></i> IA integrada
+    <!-- Benefícios do Sistema -->
+    <div class="register-benefits">
+        <h4><i class="fas fa-star me-2"></i>Por que se registrar?</h4>
+        <div class="benefits-list">
+            <div class="benefit-item">
+                <div class="benefit-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="benefit-text">
+                    <h5>Dashboard em Tempo Real</h5>
+                    <p>Acompanhe suas finanças com gráficos e estatísticas atualizadas</p>
+                </div>
+            </div>
+            
+            <div class="benefit-item">
+                <div class="benefit-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="benefit-text">
+                    <h5>Segurança Máxima</h5>
+                    <p>Seus dados protegidos com criptografia de ponta a ponta</p>
+                </div>
+            </div>
+            
+            <div class="benefit-item">
+                <div class="benefit-icon">
+                    <i class="fas fa-bullseye"></i>
+                </div>
+                <div class="benefit-text">
+                    <h5>Metas Financeiras</h5>
+                    <p>Defina e acompanhe seus objetivos financeiros</p>
+                </div>
+            </div>
+            
+            <div class="benefit-item">
+                <div class="benefit-icon">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="benefit-text">
+                    <h5>IA Financeira</h5>
+                    <p>Receba insights e recomendações inteligentes</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Informações do Desenvolvedor -->
+    <div style="text-align: center; margin-top: var(--spacing-xl); padding: var(--spacing-lg); color: var(--text-muted); font-size: 0.9rem;">
+        <p><i class="fas fa-code me-2"></i> Sistema desenvolvido por <strong>Deyvid Santos Luz</strong></p>
+        <p><i class="fas fa-building me-2"></i> deyv's company • <i class="fas fa-envelope me-2"></i> suportdeyvid@gmail.com</p>
+        <p class="neon-badge" style="display: inline-block; margin-top: var(--spacing-sm);">
+            <i class="fas fa-bolt"></i> ContaSmart Pro Executive v2.0.1
         </p>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elementos do DOM
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirm_password');
+        const passwordStrengthBar = document.getElementById('passwordStrengthBar');
+        const passwordStrengthText = document.getElementById('passwordStrengthText');
+        const form = document.getElementById('registerForm');
+        
+        // Elementos dos requisitos
+        const reqLength = document.getElementById('reqLength');
+        const reqUppercase = document.getElementById('reqUppercase');
+        const reqLowercase = document.getElementById('reqLowercase');
+        const reqNumber = document.getElementById('reqNumber');
+        
+        // Validar senha em tempo real
+        passwordInput.addEventListener('input', function() {
+            validatePassword();
+            validatePasswordMatch();
+        });
+        
+        confirmPasswordInput.addEventListener('input', validatePasswordMatch);
+        
+        // Validar formulário antes de enviar
+        form.addEventListener('submit', function(e) {
+            if (!validateForm()) {
+                e.preventDefault();
+            }
+        });
+        
+        function validatePassword() {
+            const password = passwordInput.value;
+            let strength = 0;
+            let messages = [];
+            
+            // Verificar requisitos
+            const hasLength = password.length >= 6;
+            const hasUppercase = /[A-Z]/.test(password);
+            const hasLowercase = /[a-z]/.test(password);
+            const hasNumber = /[0-9]/.test(password);
+            
+            // Atualizar indicadores visuais
+            updateRequirement(reqLength, hasLength);
+            updateRequirement(reqUppercase, hasUppercase);
+            updateRequirement(reqLowercase, hasLowercase);
+            updateRequirement(reqNumber, hasNumber);
+            
+            // Calcular força
+            if (hasLength) strength += 25;
+            if (hasUppercase) strength += 25;
+            if (hasLowercase) strength += 25;
+            if (hasNumber) strength += 25;
+            
+            // Atualizar barra de força
+            passwordStrengthBar.style.width = strength + '%';
+            
+            // Atualizar cor e texto
+            if (strength === 0) {
+                passwordStrengthBar.style.backgroundColor = 'var(--danger-color)';
+                passwordStrengthText.textContent = 'Muito fraca';
+                passwordStrengthText.style.color = 'var(--danger-color)';
+            } else if (strength <= 50) {
+                passwordStrengthBar.style.backgroundColor = 'var(--danger-color)';
+                passwordStrengthText.textContent = 'Fraca';
+                passwordStrengthText.style.color = 'var(--danger-color)';
+            } else if (strength <= 75) {
+                passwordStrengthBar.style.backgroundColor = 'var(--warning-color)';
+                passwordStrengthText.textContent = 'Média';
+                passwordStrengthText.style.color = 'var(--warning-color)';
+            } else {
+                passwordStrengthBar.style.backgroundColor = 'var(--success-color)';
+                passwordStrengthText.textContent = 'Forte';
+                passwordStrengthText.style.color = 'var(--success-color)';
+            }
+            
+            return strength >= 75;
+        }
+        
+        function updateRequirement(element, isValid) {
+            if (isValid) {
+                element.classList.add('valid');
+                element.style.color = 'var(--success-color)';
+            } else {
+                element.classList.remove('valid');
+                element.style.color = 'var(--text-secondary)';
+            }
+        }
+        
+        function validatePasswordMatch() {
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+            const errorElement = document.getElementById('confirmPasswordError');
+            
+            if (confirmPassword && password !== confirmPassword) {
+                confirmPasswordInput.classList.add('error');
+                errorElement.textContent = 'As senhas não coincidem';
+                errorElement.style.display = 'block';
+                return false;
+            } else {
+                confirmPasswordInput.classList.remove('error');
+                errorElement.style.display = 'none';
+                return true;
+            }
+        }
+        
+        function validateForm() {
+            let isValid = true;
+            
+            // Validar nome de usuário
+            const username = document.getElementById('username').value;
+            const usernameError = document.getElementById('usernameError');
+            if (username.length < 3) {
+                usernameError.textContent = 'Nome de usuário deve ter pelo menos 3 caracteres';
+                usernameError.style.display = 'block';
+                isValid = false;
+            } else {
+                usernameError.style.display = 'none';
+            }
+            
+            // Validar email
+            const email = document.getElementById('email').value;
+            const emailError = document.getElementById('emailError');
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                emailError.textContent = 'Por favor, insira um email válido';
+                emailError.style.display = 'block';
+                isValid = false;
+            } else {
+                emailError.style.display = 'none';
+            }
+            
+            // Validar senha
+            if (!validatePassword()) {
+                isValid = false;
+            }
+            
+            // Validar confirmação de senha
+            if (!validatePasswordMatch()) {
+                isValid = false;
+            }
+            
+            // Validar termos
+            const terms = document.querySelector('input[name="terms"]');
+            const termsError = document.getElementById('termsError');
+            if (!terms.checked) {
+                termsError.textContent = 'Você deve aceitar os termos e condições';
+                termsError.style.display = 'block';
+                isValid = false;
+            } else {
+                termsError.style.display = 'none';
+            }
+            
+            return isValid;
+        }
+        
+        // Auto-focar no primeiro campo
+        document.getElementById('username').focus();
+    });
+    
+    function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `flash-message flash-${type}`;
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 300px;
+            animation: slideInRight 0.3s ease;
+        `;
+        
+        toast.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-circle' : type === 'danger' ? 'times-circle' : 'info-circle'}"></i>
+            ${message}
+            <button class="flash-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+</script>
 {% endblock %}

@@ -1,1069 +1,788 @@
 {% extends "base_executivo.html" %}
 
-{% block title %}Análises Financeiras - ContaSmart Pro{% endblock %}
-{% block page_title %}Análises Executivas{% endblock %}
-{% block page_subtitle %}Insights e inteligência financeira avançada{% endblock %}
+{% block title %}Transações - ContaSmart Pro{% endblock %}
+{% block page_title %}Gestão de Transações{% endblock %}
+{% block page_subtitle %}Gerencie suas receitas e despesas{% endblock %}
 
 {% block breadcrumb %}
 <li><a href="{{ url_for('dashboard') }}">Dashboard</a></li>
-<li><a href="#">{{ 'Análises' }}</a></li>
+<li><a href="{{ url_for('transactions') }}">{{ 'Transações' }}</a></li>
 {% endblock %}
 
 {% block extra_css %}
 <style>
-    /* Analytics Header */
-    .analytics-header {
+    .transactions-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: var(--spacing-xl);
         flex-wrap: wrap;
-        gap: var(--spacing-lg);
+        gap: var(--spacing-md);
     }
     
-    .period-selector {
+    .filters-container {
         display: flex;
         gap: var(--spacing-md);
         align-items: center;
+        flex-wrap: wrap;
     }
     
-    .period-btn {
-        padding: var(--spacing-sm) var(--spacing-lg);
+    .filter-group {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+    
+    .filter-select {
+        padding: 8px 12px;
         background: var(--bg-tertiary);
         border: 1px solid var(--border-color);
         border-radius: var(--border-radius-md);
-        color: var(--text-secondary);
-        cursor: pointer;
-        transition: all var(--transition-fast);
-        font-family: var(--font-primary);
-        font-size: var(--font-size-sm);
-    }
-    
-    .period-btn:hover {
-        background: var(--bg-surface);
         color: var(--text-primary);
+        font-size: 0.9rem;
+        min-width: 150px;
     }
     
-    .period-btn.active {
-        background: var(--primary-color);
-        border-color: var(--primary-color);
-        color: white;
+    .search-box {
+        position: relative;
+        min-width: 250px;
     }
     
-    /* Insights Grid */
-    .insights-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: var(--spacing-lg);
-        margin-bottom: var(--spacing-xl);
+    .search-box i {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-muted);
     }
     
-    .insight-card {
-        background: var(--bg-card);
+    .search-box input {
+        width: 100%;
+        padding: 8px 12px 8px 40px;
+        background: var(--bg-tertiary);
         border: 1px solid var(--border-color);
-        border-radius: var(--border-radius-lg);
-        padding: var(--spacing-lg);
-        transition: all var(--transition-normal);
-    }
-    
-    .insight-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--elevation-3);
-    }
-    
-    .insight-header {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-md);
-        margin-bottom: var(--spacing-md);
-    }
-    
-    .insight-icon {
-        width: 40px;
-        height: 40px;
         border-radius: var(--border-radius-md);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.25rem;
+        color: var(--text-primary);
+        font-size: 0.9rem;
     }
     
-    .insight-success .insight-icon {
-        background: rgba(0, 255, 136, 0.1);
-        color: var(--success-color);
-    }
-    
-    .insight-warning .insight-icon {
-        background: rgba(255, 153, 0, 0.1);
-        color: var(--warning-color);
-    }
-    
-    .insight-danger .insight-icon {
-        background: rgba(255, 51, 102, 0.1);
-        color: var(--danger-color);
-    }
-    
-    .insight-info .insight-icon {
-        background: rgba(0, 204, 255, 0.1);
-        color: var(--info-color);
-    }
-    
-    .insight-title {
-        font-size: var(--font-size-base);
-        font-weight: 600;
-        margin-bottom: 4px;
-    }
-    
-    .insight-message {
-        color: var(--text-secondary);
-        font-size: var(--font-size-sm);
-        line-height: 1.5;
-    }
-    
-    /* Comparative Analysis */
-    .comparative-grid {
+    .transactions-stats {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: var(--spacing-lg);
         margin-bottom: var(--spacing-xl);
     }
     
-    .comparative-card {
+    .stat-mini-card {
         background: var(--bg-card);
         border: 1px solid var(--border-color);
         border-radius: var(--border-radius-lg);
         padding: var(--spacing-lg);
+        text-align: center;
     }
     
-    .comparative-metric {
+    .stat-mini-value {
         font-size: 1.5rem;
-        font-weight: 800;
-        margin-bottom: var(--spacing-sm);
+        font-weight: 700;
+        margin-bottom: var(--spacing-xs);
         font-family: var(--font-mono);
     }
     
-    .comparative-label {
-        font-size: var(--font-size-sm);
+    .stat-mini-label {
+        font-size: 0.85rem;
         color: var(--text-muted);
         text-transform: uppercase;
         letter-spacing: 1px;
-        margin-bottom: var(--spacing-md);
     }
     
-    .comparative-change {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-sm);
-        font-size: var(--font-size-sm);
-        font-weight: 600;
-    }
-    
-    .change-positive {
-        color: var(--success-color);
-    }
-    
-    .change-negative {
-        color: var(--danger-color);
-    }
-    
-    /* Charts Section */
-    .charts-section {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-        gap: var(--spacing-lg);
-        margin-bottom: var(--spacing-xl);
-    }
-    
-    .chart-container {
+    .transactions-table-container {
         background: var(--bg-card);
         border: 1px solid var(--border-color);
         border-radius: var(--border-radius-lg);
-        padding: var(--spacing-lg);
-        height: 300px;
-        position: relative;
-    }
-    
-    .chart-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: var(--spacing-lg);
-    }
-    
-    .chart-title {
-        font-size: var(--font-size-base);
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-sm);
-    }
-    
-    /* Category Breakdown */
-    .category-breakdown {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: var(--spacing-lg);
+        overflow: hidden;
         margin-bottom: var(--spacing-xl);
     }
     
-    .category-list {
-        display: flex;
-        flex-direction: column;
-        gap: var(--spacing-md);
+    .table-responsive {
+        overflow-x: auto;
     }
     
-    .category-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: var(--spacing-md);
-        background: var(--bg-tertiary);
-        border-radius: var(--border-radius-md);
-        border-left: 4px solid;
-    }
-    
-    .category-info {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-md);
-    }
-    
-    .category-color {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-    }
-    
-    .category-name {
-        font-weight: 500;
-    }
-    
-    .category-amount {
-        font-family: var(--font-mono);
-        font-weight: 600;
-    }
-    
-    .category-percentage {
-        font-size: var(--font-size-xs);
-        color: var(--text-muted);
-        margin-top: 2px;
-    }
-    
-    /* Trends Section */
-    .trends-section {
-        background: var(--bg-card);
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius-lg);
-        padding: var(--spacing-lg);
-        margin-bottom: var(--spacing-xl);
-    }
-    
-    .trends-table {
+    .transactions-table {
         width: 100%;
         border-collapse: collapse;
     }
     
-    .trends-table th {
-        padding: var(--spacing-md);
+    .transactions-table th {
         text-align: left;
-        font-weight: 600;
-        font-size: var(--font-size-sm);
+        padding: var(--spacing-md);
+        background: var(--bg-tertiary);
+        border-bottom: 1px solid var(--border-color);
         color: var(--text-secondary);
-        border-bottom: 2px solid var(--border-color);
-        font-family: var(--font-mono);
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        white-space: nowrap;
     }
     
-    .trends-table td {
+    .transactions-table td {
         padding: var(--spacing-md);
         border-bottom: 1px solid var(--border-light);
+        font-size: 0.95rem;
+        white-space: nowrap;
     }
     
-    .trends-table tr:last-child td {
+    .transactions-table tbody tr:hover {
+        background: var(--bg-tertiary);
+    }
+    
+    .transactions-table tbody tr:last-child td {
         border-bottom: none;
     }
     
-    .trend-value {
-        font-family: var(--font-mono);
+    .type-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
         font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
-    .trend-value.positive {
+    .type-income {
+        background: rgba(0, 255, 136, 0.1);
+        color: var(--success-color);
+        border: 1px solid rgba(0, 255, 136, 0.3);
+    }
+    
+    .type-expense {
+        background: rgba(255, 51, 102, 0.1);
+        color: var(--danger-color);
+        border: 1px solid rgba(255, 51, 102, 0.3);
+    }
+    
+    .category-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        border: 1px solid;
+    }
+    
+    .amount-cell {
+        font-family: var(--font-mono);
+        font-weight: 600;
+        font-size: 1rem;
+    }
+    
+    .amount-income {
         color: var(--success-color);
     }
     
-    .trend-value.negative {
+    .amount-expense {
         color: var(--danger-color);
     }
     
-    /* Export Section */
-    .export-section {
+    .action-buttons {
+        display: flex;
+        gap: var(--spacing-xs);
+    }
+    
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--border-radius-sm);
+        color: var(--text-secondary);
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        transition: all var(--transition-fast);
+    }
+    
+    .action-btn:hover {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+    
+    .action-btn.edit:hover {
+        background: var(--warning-color);
+        border-color: var(--warning-color);
+    }
+    
+    .action-btn.delete:hover {
+        background: var(--danger-color);
+        border-color: var(--danger-color);
+    }
+    
+    .no-transactions {
         text-align: center;
-        padding: var(--spacing-xl);
+        padding: var(--spacing-xxl);
+        color: var(--text-muted);
+    }
+    
+    .no-transactions i {
+        font-size: 4rem;
+        margin-bottom: var(--spacing-lg);
+        opacity: 0.3;
+    }
+    
+    .pagination-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--spacing-lg);
         background: var(--bg-card);
         border: 1px solid var(--border-color);
         border-radius: var(--border-radius-lg);
     }
     
-    .export-options {
-        display: flex;
-        justify-content: center;
-        gap: var(--spacing-md);
-        margin-top: var(--spacing-lg);
-        flex-wrap: wrap;
+    .pagination-info {
+        color: var(--text-muted);
+        font-size: 0.9rem;
     }
     
-    /* Responsive */
+    .pagination-buttons {
+        display: flex;
+        gap: var(--spacing-sm);
+    }
+    
+    .pagination-btn {
+        padding: 8px 16px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-md);
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        transition: all var(--transition-fast);
+    }
+    
+    .pagination-btn:hover:not(:disabled) {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+    
+    .pagination-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .quick-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: var(--spacing-md);
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        margin-top: var(--spacing-xl);
+    }
+    
+    .summary-item {
+        text-align: center;
+    }
+    
+    .summary-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+        font-family: var(--font-mono);
+    }
+    
+    .summary-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
     @media (max-width: 768px) {
-        .analytics-header {
+        .transactions-header {
             flex-direction: column;
             align-items: stretch;
         }
         
-        .period-selector {
-            justify-content: center;
-        }
-        
-        .charts-section {
-            grid-template-columns: 1fr;
-        }
-        
-        .chart-container {
-            height: 250px;
-        }
-        
-        .category-breakdown {
-            grid-template-columns: 1fr;
-        }
-        
-        .export-options {
+        .filters-container {
             flex-direction: column;
-            align-items: center;
+            align-items: stretch;
+        }
+        
+        .filter-group {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .filter-select, .search-box {
+            width: 100%;
+        }
+        
+        .transactions-stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .transactions-table th,
+        .transactions-table td {
+            padding: var(--spacing-sm);
+            font-size: 0.85rem;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .transactions-stats {
+            grid-template-columns: 1fr;
+        }
+        
+        .quick-summary {
+            grid-template-columns: repeat(2, 1fr);
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<!-- Analytics Header -->
-<div class="analytics-header">
+<!-- Header com Filtros -->
+<div class="transactions-header">
     <div>
-        <h2>Análises Financeiras</h2>
-        <p class="text-muted">Última atualização: {{ now.strftime('%d/%m/%Y %H:%M') }}</p>
+        <h1 style="font-size: 1.8rem; margin-bottom: var(--spacing-xs);">Transações Financeiras</h1>
+        <p style="color: var(--text-muted);">Gerencie todas as suas receitas e despesas</p>
     </div>
     
-    <div class="period-selector">
-        <button class="period-btn {% if period == 'month' %}active{% endif %}" 
-                onclick="changePeriod('month')">
-            Mensal
+    <div class="filters-container">
+        <div class="filter-group">
+            <select class="filter-select" id="filterType">
+                <option value="">Todos os tipos</option>
+                <option value="income">Receitas</option>
+                <option value="expense">Despesas</option>
+            </select>
+            
+            <select class="filter-select" id="filterCategory">
+                <option value="">Todas categorias</option>
+                {% for category in categories %}
+                <option value="{{ category.id }}">{{ category.name }}</option>
+                {% endfor %}
+            </select>
+            
+            <select class="filter-select" id="filterMonth">
+                <option value="">Todos os meses</option>
+                <option value="2026-01">Janeiro 2026</option>
+                <option value="2026-02">Fevereiro 2026</option>
+                <option value="2026-03">Março 2026</option>
+                <option value="2026-04">Abril 2026</option>
+                <option value="2026-05">Maio 2026</option>
+                <option value="2026-06">Junho 2026</option>
+            </select>
+        </div>
+        
+        <div class="search-box">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchInput" placeholder="Pesquisar transações...">
+        </div>
+        
+        <button class="neon-btn primary" onclick="showAddTransactionModal()">
+            <i class="fas fa-plus"></i> Nova Transação
         </button>
-        <button class="period-btn {% if period == 'quarter' %}active{% endif %}" 
-                onclick="changePeriod('quarter')">
-            Trimestral
-        </button>
-        <button class="period-btn {% if period == 'year' %}active{% endif %}" 
-                onclick="changePeriod('year')">
-            Anual
-        </button>
-        <select class="neon-select sm" onchange="changeYear(this.value)">
-            <option value="2024" {% if year == 2024 %}selected{% endif %}>2024</option>
-            <option value="2023" {% if year == 2023 %}selected{% endif %}>2023</option>
-            <option value="2022" {% if year == 2022 %}selected{% endif %}>2022</option>
-        </select>
     </div>
 </div>
 
-<!-- Insights -->
-<div class="insights-grid">
-    {% for insight in insights %}
-    <div class="insight-card insight-{{ insight.type }}">
-        <div class="insight-header">
-            <div class="insight-icon">
-                <i class="fas fa-{{ insight.icon }}"></i>
-            </div>
-            <div>
-                <div class="insight-title">{{ insight.title }}</div>
-                <div class="insight-message">{{ insight.message }}</div>
-            </div>
-        </div>
-    </div>
-    {% endfor %}
-</div>
-
-<!-- Comparative Analysis -->
-<div class="section-header">
-    <h3><i class="fas fa-chart-bar"></i> Análise Comparativa</h3>
-    <p>Comparativo mês atual vs anterior</p>
-</div>
-
-<div class="comparative-grid">
-    {% for comp in comparisons %}
-    <div class="comparative-card">
-        <div class="comparative-metric">
-            R$ {{ "%.2f"|format(comp.current) }}
-        </div>
-        <div class="comparative-label">
-            {{ comp.metric }}
-        </div>
-        <div class="comparative-change">
-            {% if comp.change > 0 %}
-                <i class="fas fa-arrow-up change-positive"></i>
-                <span class="change-positive">+{{ "%.1f"|format(comp.change) }}%</span>
-            {% else %}
-                <i class="fas fa-arrow-down change-negative"></i>
-                <span class="change-negative">{{ "%.1f"|format(comp.change) }}%</span>
-            {% endif %}
-            <span class="text-muted">vs anterior (R$ {{ "%.2f"|format(comp.previous) }})</span>
-        </div>
-    </div>
-    {% endfor %}
-</div>
-
-<!-- Charts Section -->
-<div class="charts-section">
-    <div class="chart-container">
-        <div class="chart-header">
-            <div class="chart-title">
-                <i class="fas fa-chart-line"></i>
-                Tendência de Receitas e Despesas
-            </div>
-            <div class="chart-actions">
-                <button class="neon-btn sm outline" onclick="toggleChartType('trendChart')">
-                    <i class="fas fa-exchange-alt"></i>
-                </button>
-            </div>
-        </div>
-        <canvas id="trendChart"></canvas>
+<!-- Estatísticas Rápidas -->
+<div class="transactions-stats">
+    <div class="stat-mini-card">
+        <div class="stat-mini-value text-success">{{ format_currency(month_income) }}</div>
+        <div class="stat-mini-label">Receitas (Mês)</div>
     </div>
     
-    <div class="chart-container">
-        <div class="chart-header">
-            <div class="chart-title">
-                <i class="fas fa-chart-pie"></i>
-                Distribuição por Categoria
-            </div>
-            <div class="chart-actions">
-                <select class="neon-select xs" onchange="updateCategoryChart(this.value)">
-                    <option value="expense">Despesas</option>
-                    <option value="income">Receitas</option>
-                </select>
-            </div>
-        </div>
-        <canvas id="categoryChart"></canvas>
-    </div>
-</div>
-
-<!-- Category Breakdown -->
-<div class="section-header">
-    <h3><i class="fas fa-tags"></i> Análise por Categoria</h3>
-    <p>Principais categorias de despesas</p>
-</div>
-
-<div class="category-breakdown">
-    <div class="category-list">
-        {% for category in category_analysis.expenses %}
-        <div class="category-item" style="border-color: {{ category.color }}">
-            <div class="category-info">
-                <div class="category-color" style="background: {{ category.color }}"></div>
-                <div>
-                    <div class="category-name">{{ category.name }}</div>
-                    <div class="category-percentage">
-                        {{ "%.1f"|format((category.total / category_analysis.expenses_total) * 100 if category_analysis.expenses_total > 0 else 0) }}%
-                    </div>
-                </div>
-            </div>
-            <div>
-                <div class="category-amount">R$ {{ "%.2f"|format(category.total) }}</div>
-                <div class="category-percentage">{{ category.count }} transações</div>
-            </div>
-        </div>
-        {% endfor %}
+    <div class="stat-mini-card">
+        <div class="stat-mini-value text-danger">{{ format_currency(month_expense) }}</div>
+        <div class="stat-mini-label">Despesas (Mês)</div>
     </div>
     
-    <div class="neon-card">
-        <div class="section-header">
-            <h4><i class="fas fa-lightbulb"></i> Insights das Categorias</h4>
-        </div>
-        <div class="insights-list">
-            {% if category_analysis.expenses|length > 0 %}
-                {% set top_category = category_analysis.expenses[0] %}
-                {% set top_percentage = (top_category.total / category_analysis.expenses_total) * 100 %}
-                
-                {% if top_percentage > 40 %}
-                <div class="insight-item warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <div>
-                        <strong>{{ top_category.name }}</strong> representa 
-                        <strong>{{ "%.1f"|format(top_percentage) }}%</strong> das despesas
-                    </div>
-                </div>
-                {% endif %}
-                
-                {% if category_analysis.expenses_total > 0 %}
-                    {% set avg_transaction = category_analysis.expenses_total / category_analysis.expenses|sum(attribute='count') %}
-                    <div class="insight-item info">
-                        <i class="fas fa-calculator"></i>
-                        <div>
-                            Valor médio por transação: <strong>R$ {{ "%.2f"|format(avg_transaction) }}</strong>
-                        </div>
-                    </div>
-                {% endif %}
-            {% endif %}
-        </div>
+    <div class="stat-mini-card">
+        <div class="stat-mini-value text-primary">{{ format_currency(month_balance) }}</div>
+        <div class="stat-mini-label">Saldo (Mês)</div>
+    </div>
+    
+    <div class="stat-mini-card">
+        <div class="stat-mini-value">{{ transactions|length }}</div>
+        <div class="stat-mini-label">Transações Totais</div>
     </div>
 </div>
 
-<!-- Trends Section -->
-<div class="trends-section">
-    <div class="section-header">
-        <h3><i class="fas fa-chart-area"></i> Tendências Temporais</h3>
-        <p>Evolução dos últimos 6 meses</p>
-    </div>
-    
-    <div class="neon-table-wrapper">
-        <table class="trends-table">
+<!-- Tabela de Transações -->
+<div class="transactions-table-container">
+    {% if transactions %}
+    <div class="table-responsive">
+        <table class="transactions-table">
             <thead>
                 <tr>
-                    <th>Período</th>
-                    <th>Receitas</th>
-                    <th>Despesas</th>
-                    <th>Saldo</th>
-                    <th>Variação</th>
+                    <th>Data</th>
+                    <th>Descrição</th>
+                    <th>Categoria</th>
+                    <th>Tipo</th>
+                    <th>Valor</th>
+                    <th class="text-right">Ações</th>
                 </tr>
             </thead>
-            <tbody>
-                {% for trend in trends %}
-                <tr>
-                    <td>{{ trend.period }}</td>
-                    <td class="trend-value">R$ {{ "%.2f"|format(trend.income) }}</td>
-                    <td class="trend-value">R$ {{ "%.2f"|format(trend.expense) }}</td>
-                    <td class="trend-value {% if trend.balance >= 0 %}positive{% else %}negative{% endif %}">
-                        R$ {{ "%+.2f"|format(trend.balance) }}
+            <tbody id="transactionsTableBody">
+                {% for trans in transactions %}
+                <tr class="transaction-row" 
+                    data-type="{{ trans.type }}"
+                    data-category="{{ trans.category_id }}"
+                    data-month="{{ trans.transaction_date[:7] }}"
+                    data-search="{{ (trans.description or '')|lower }}">
+                    <td class="date">{{ trans.transaction_date }}</td>
+                    <td>
+                        <div class="transaction-title">{{ trans.description or 'Sem descrição' }}</div>
+                        {% if trans.created_at %}
+                        <div class="transaction-description">
+                            <small style="color: var(--text-muted);">
+                                Registrado em: {{ trans.created_at[:10] }}
+                            </small>
+                        </div>
+                        {% endif %}
                     </td>
                     <td>
-                        {% if loop.index > 1 %}
-                            {% set prev_trend = trends[loop.index0 - 1] %}
-                            {% set income_change = ((trend.income - prev_trend.income) / prev_trend.income) * 100 if prev_trend.income > 0 else 0 %}
-                            <span class="{% if income_change >= 0 %}positive{% else %}negative{% endif %}">
-                                {{ "%+.1f"|format(income_change) }}%
-                            </span>
-                        {% else %}
-                            <span class="text-muted">-</span>
-                        {% endif %}
+                        <span class="category-badge" style="background-color: {{ trans.category_color or '#0066ff' }}20; border-color: {{ trans.category_color or '#0066ff' }}; color: {{ trans.category_color or '#0066ff' }};">
+                            <i class="{{ trans.category_icon or 'fas fa-tag' }}"></i>
+                            {{ trans.category_name or 'Sem categoria' }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="type-badge type-{{ trans.type }}">
+                            <i class="fas fa-{{ 'arrow-up' if trans.type == 'income' else 'arrow-down' }}"></i>
+                            {{ 'Receita' if trans.type == 'income' else 'Despesa' }}
+                        </span>
+                    </td>
+                    <td class="amount-cell amount-{{ trans.type }}">
+                        {% if trans.type == 'income' %}+{% else %}-{% endif %}
+                        {{ format_currency(trans.amount) }}
+                    </td>
+                    <td class="text-right">
+                        <div class="action-buttons">
+                            <button class="action-btn edit" onclick="editTransaction({{ trans.id }})" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="action-btn delete" onclick="deleteTransaction({{ trans.id }})" title="Excluir">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+    {% else %}
+    <div class="no-transactions">
+        <i class="fas fa-receipt"></i>
+        <h3 style="margin-bottom: var(--spacing-md);">Nenhuma transação encontrada</h3>
+        <p style="color: var(--text-muted); margin-bottom: var(--spacing-xl);">
+            Você ainda não registrou nenhuma transação financeira.
+        </p>
+        <button class="neon-btn primary lg" onclick="showAddTransactionModal()">
+            <i class="fas fa-plus"></i> Adicionar Primeira Transação
+        </button>
+    </div>
+    {% endif %}
 </div>
 
-<!-- Export Section -->
-<div class="export-section">
-    <h3><i class="fas fa-file-export"></i> Exportar Análises</h3>
-    <p class="text-muted">Baixe relatórios detalhados em diversos formatos</p>
+<!-- Paginação -->
+{% if transactions %}
+<div class="pagination-container">
+    <div class="pagination-info">
+        Mostrando <strong id="shownCount">{{ transactions|length }}</strong> de 
+        <strong>{{ transactions|length }}</strong> transações
+    </div>
     
-    <div class="export-options">
-        <button class="neon-btn primary" onclick="exportReport('pdf')">
-            <i class="fas fa-file-pdf"></i>
-            PDF Executivo
+    <div class="pagination-buttons">
+        <button class="pagination-btn" id="prevPage" disabled>
+            <i class="fas fa-chevron-left"></i> Anterior
         </button>
-        <button class="neon-btn success" onclick="exportReport('excel')">
-            <i class="fas fa-file-excel"></i>
-            Excel com Dados
+        <span style="padding: 8px 16px; color: var(--text-secondary);">
+            Página <span id="currentPage">1</span>
+        </span>
+        <button class="pagination-btn" id="nextPage" disabled>
+            Próxima <i class="fas fa-chevron-right"></i>
         </button>
-        <button class="neon-btn info" onclick="exportReport('csv')">
-            <i class="fas fa-file-csv"></i>
-            CSV Completo
-        </button>
-        <button class="neon-btn outline" onclick="printReport()">
-            <i class="fas fa-print"></i>
-            Imprimir Relatório
-        </button>
+    </div>
+</div>
+{% endif %}
+
+<!-- Resumo Rápido -->
+<div class="quick-summary">
+    <div class="summary-item">
+        <div class="summary-value text-success">{{ format_currency(total_income) }}</div>
+        <div class="summary-label">Total Receitas</div>
+    </div>
+    
+    <div class="summary-item">
+        <div class="summary-value text-danger">{{ format_currency(total_expense) }}</div>
+        <div class="summary-label">Total Despesas</div>
+    </div>
+    
+    <div class="summary-item">
+        <div class="summary-value text-primary">{{ format_currency(balance) }}</div>
+        <div class="summary-label">Saldo Total</div>
+    </div>
+    
+    <div class="summary-item">
+        <div class="summary-value">{{ categories|length }}</div>
+        <div class="summary-label">Categorias</div>
+    </div>
+</div>
+
+<!-- Modal para Edição (placeholder) -->
+<div id="editTransactionModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3><i class="fas fa-edit"></i> Editar Transação</h3>
+            <button class="modal-close" onclick="closeModal('editTransactionModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="text-align: center; padding: var(--spacing-xl); color: var(--text-muted);">
+                <i class="fas fa-cogs fa-2x" style="margin-bottom: var(--spacing-md); display: block;"></i>
+                Funcionalidade em desenvolvimento
+            </p>
+        </div>
+        <div class="modal-footer">
+            <button class="neon-btn outline" onclick="closeModal('editTransactionModal')">
+                Fechar
+            </button>
+        </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+    let currentPage = 1;
+    const rowsPerPage = 10;
+    let filteredTransactions = [];
+    
     document.addEventListener('DOMContentLoaded', function() {
-        // Inicializar gráficos
-        initTrendChart();
-        initCategoryChart();
+        // Inicializar filtros
+        initFilters();
         
-        // Configurar tooltips
-        setupAnalyticsTooltips();
+        // Configurar pesquisa
+        setupSearch();
+        
+        // Configurar paginação
+        setupPagination();
+        
+        // Mostrar contagem inicial
+        updateTransactionCount();
     });
     
-    // Gráfico de Tendência
-    function initTrendChart() {
-        const ctx = document.getElementById('trendChart').getContext('2d');
-        const trendData = {{ trends|tojson }};
+    function initFilters() {
+        const filterType = document.getElementById('filterType');
+        const filterCategory = document.getElementById('filterCategory');
+        const filterMonth = document.getElementById('filterMonth');
         
-        const labels = trendData.map(t => t.period);
-        const incomes = trendData.map(t => t.income);
-        const expenses = trendData.map(t => t.expense);
+        [filterType, filterCategory, filterMonth].forEach(filter => {
+            filter.addEventListener('change', filterTransactions);
+        });
+    }
+    
+    function setupSearch() {
+        const searchInput = document.getElementById('searchInput');
+        let searchTimeout;
         
-        window.trendChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Receitas',
-                        data: incomes,
-                        borderColor: '#00ff88',
-                        backgroundColor: 'rgba(0, 255, 136, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 6,
-                        pointHoverRadius: 10
-                    },
-                    {
-                        label: 'Despesas',
-                        data: expenses,
-                        borderColor: '#ff3366',
-                        backgroundColor: 'rgba(255, 51, 102, 0.1)',
-                        borderWidth: 3,
-                        fill: true,
-                        tension: 0.4,
-                        pointRadius: 6,
-                        pointHoverRadius: 10
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: '#a0a0c0',
-                            font: {
-                                family: 'Inter, sans-serif'
-                            }
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                return `${context.dataset.label}: R$ ${context.parsed.y.toFixed(2)}`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.05)'
-                        },
-                        ticks: {
-                            color: '#a0a0c0'
-                        }
-                    },
-                    y: {
-                        grid: {
-                            color: 'rgba(255, 255, 255, 0.05)'
-                        },
-                        ticks: {
-                            color: '#a0a0c0',
-                            callback: function(value) {
-                                return 'R$ ' + value.toLocaleString('pt-BR');
-                            }
-                        }
-                    }
-                }
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                filterTransactions();
+            }, 300);
+        });
+    }
+    
+    function setupPagination() {
+        const prevBtn = document.getElementById('prevPage');
+        const nextBtn = document.getElementById('nextPage');
+        
+        prevBtn.addEventListener('click', () => changePage(-1));
+        nextBtn.addEventListener('click', () => changePage(1));
+    }
+    
+    function filterTransactions() {
+        const typeFilter = document.getElementById('filterType').value;
+        const categoryFilter = document.getElementById('filterCategory').value;
+        const monthFilter = document.getElementById('filterMonth').value;
+        const searchFilter = document.getElementById('searchInput').value.toLowerCase();
+        
+        const rows = document.querySelectorAll('.transaction-row');
+        let visibleCount = 0;
+        
+        rows.forEach(row => {
+            const type = row.getAttribute('data-type');
+            const category = row.getAttribute('data-category');
+            const month = row.getAttribute('data-month');
+            const searchText = row.getAttribute('data-search');
+            
+            let show = true;
+            
+            // Aplicar filtros
+            if (typeFilter && type !== typeFilter) show = false;
+            if (categoryFilter && category !== categoryFilter) show = false;
+            if (monthFilter && month !== monthFilter) show = false;
+            if (searchFilter && !searchText.includes(searchFilter)) show = false;
+            
+            if (show) {
+                row.style.display = '';
+                visibleCount++;
+            } else {
+                row.style.display = 'none';
+            }
+        });
+        
+        // Atualizar contagem
+        document.getElementById('shownCount').textContent = visibleCount;
+        
+        // Resetar paginação
+        currentPage = 1;
+        updatePagination(visibleCount);
+    }
+    
+    function updateTransactionCount() {
+        const total = document.querySelectorAll('.transaction-row').length;
+        const visible = document.querySelectorAll('.transaction-row:not([style*="display: none"])').length;
+        
+        document.getElementById('shownCount').textContent = visible;
+        
+        if (visible === 0 && total > 0) {
+            showNoResultsMessage();
+        }
+    }
+    
+    function showNoResultsMessage() {
+        // Poderia mostrar uma mensagem de "nenhum resultado encontrado"
+        console.log('Nenhuma transação encontrada com os filtros aplicados');
+    }
+    
+    function updatePagination(totalVisible) {
+        const totalPages = Math.ceil(totalVisible / rowsPerPage);
+        const currentPageElement = document.getElementById('currentPage');
+        const prevBtn = document.getElementById('prevPage');
+        const nextBtn = document.getElementById('nextPage');
+        
+        currentPageElement.textContent = currentPage;
+        
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+        
+        // Mostrar apenas as linhas da página atual
+        const rows = document.querySelectorAll('.transaction-row:not([style*="display: none"])');
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = startIndex + rowsPerPage;
+        
+        rows.forEach((row, index) => {
+            if (index >= startIndex && index < endIndex) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
             }
         });
     }
     
-    // Gráfico de Categorias
-    function initCategoryChart() {
-        const ctx = document.getElementById('categoryChart').getContext('2d');
-        const categoryData = {{ category_analysis.expenses|tojson }};
+    function changePage(direction) {
+        const totalVisible = document.querySelectorAll('.transaction-row:not([style*="display: none"])').length;
+        const totalPages = Math.ceil(totalVisible / rowsPerPage);
         
-        const labels = categoryData.map(c => c.name);
-        const data = categoryData.map(c => c.total);
-        const colors = categoryData.map(c => c.color);
+        currentPage += direction;
         
-        window.categoryChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: data,
-                    backgroundColor: colors,
-                    borderColor: '#1e1e28',
-                    borderWidth: 2,
-                    hoverOffset: 15
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: {
-                            color: '#a0a0c0',
-                            font: {
-                                family: 'Inter, sans-serif'
-                            }
-                        }
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                const value = context.parsed;
-                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                const percentage = Math.round((value / total) * 100);
-                                return `${context.label}: R$ ${value.toFixed(2)} (${percentage}%)`;
-                            }
-                        }
-                    }
-                }
-            }
-        });
-    }
-    
-    // Funções de controle
-    function changePeriod(newPeriod) {
-        // Atualizar botões ativos
-        document.querySelectorAll('.period-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        event.target.classList.add('active');
+        if (currentPage < 1) currentPage = 1;
+        if (currentPage > totalPages) currentPage = totalPages;
         
-        // Atualizar URL com novo período
-        const url = new URL(window.location);
-        url.searchParams.set('period', newPeriod);
-        window.location.href = url.toString();
+        updatePagination(totalVisible);
     }
     
-    function changeYear(newYear) {
-        const url = new URL(window.location);
-        url.searchParams.set('year', newYear);
-        window.location.href = url.toString();
-    }
-    
-    function toggleChartType(chartId) {
-        if (chartId === 'trendChart' && window.trendChart) {
-            const currentType = window.trendChart.config.type;
-            const newType = currentType === 'line' ? 'bar' : 'line';
-            window.trendChart.config.type = newType;
-            window.trendChart.update();
-        }
-    }
-    
-    function updateCategoryChart(type) {
-        // Aqui você carregaria dados diferentes para receitas/despesas
-        // Por enquanto só alterna entre os conjuntos existentes
-        alert(`Carregar dados de ${type} - Implementar`);
-    }
-    
-    // Funções de exportação
-    function exportReport(format) {
-        showLoading(`Gerando relatório em ${format.toUpperCase()}...`);
+    function editTransaction(id) {
+        // Mostrar modal de edição
+        document.getElementById('editTransactionModal').style.display = 'flex';
         
-        setTimeout(() => {
-            hideLoading();
-            showNotification(`Relatório ${format.toUpperCase()} gerado com sucesso!`, 'success');
+        // Aqui você carregaria os dados da transação via API
+        console.log('Editando transação ID:', id);
+        
+        showToast('Funcionalidade em desenvolvimento!', 'info');
+    }
+    
+    function deleteTransaction(id) {
+        if (confirm('Tem certeza que deseja excluir esta transação?\nEsta ação não pode ser desfeita.')) {
+            // Aqui você faria a requisição para deletar a transação
+            // fetch(`/api/delete_transaction/${id}`, { method: 'DELETE' })
             
-            // Simular download
-            const link = document.createElement('a');
-            link.href = '#';
-            link.download = `analise_financeira_${new Date().getTime()}.${format}`;
-            link.textContent = 'Clique para baixar';
-            link.className = 'neon-btn success sm';
-            link.style.marginLeft = '10px';
+            showToast('Transação excluída com sucesso!', 'success');
             
-            showNotification('Relatório pronto para download', link);
-        }, 1500);
-    }
-    
-    function printReport() {
-        // Criar versão para impressão
-        const printContent = document.createElement('div');
-        printContent.innerHTML = `
-            <style>
-                @media print {
-                    body * {
-                        visibility: hidden;
-                    }
-                    .print-area, .print-area * {
-                        visibility: visible;
-                    }
-                    .print-area {
-                        position: absolute;
-                        left: 0;
-                        top: 0;
-                    }
-                }
-            </style>
-            <div class="print-area">
-                ${document.querySelector('.content-wrapper').innerHTML}
-            </div>
-        `;
-        
-        document.body.appendChild(printContent);
-        window.print();
-        printContent.remove();
-    }
-    
-    // Tooltips
-    function setupAnalyticsTooltips() {
-        // Tooltips para valores
-        document.querySelectorAll('.trend-value, .category-amount, .comparative-metric').forEach(el => {
-            el.addEventListener('mouseenter', function() {
-                const value = parseFloat(this.textContent.replace(/[^\d.,]/g, '').replace(',', '.'));
-                if (!isNaN(value)) {
-                    const tooltip = document.createElement('div');
-                    tooltip.className = 'executive-tooltip';
-                    tooltip.textContent = formatCurrencyDetailed(value);
-                    document.body.appendChild(tooltip);
-                    
-                    const rect = this.getBoundingClientRect();
-                    tooltip.style.left = `${rect.left + rect.width / 2 - tooltip.offsetWidth / 2}px`;
-                    tooltip.style.top = `${rect.top - tooltip.offsetHeight - 10}px`;
-                    
-                    this.tooltip = tooltip;
-                }
-            });
-            
-            el.addEventListener('mouseleave', function() {
-                if (this.tooltip) {
-                    this.tooltip.remove();
-                }
-            });
-        });
-    }
-    
-    function formatCurrencyDetailed(value) {
-        const formatter = new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL'
-        });
-        
-        const formatted = formatter.format(value);
-        const absValue = Math.abs(value);
-        
-        let details = [];
-        if (absValue >= 10000) details.push('Valor significativo');
-        if (absValue >= 50000) details.push('Valor elevado');
-        if (value < 0) details.push('Valor negativo');
-        
-        return details.length > 0 ? 
-            `${formatted} (${details.join(', ')})` : 
-            formatted;
-    }
-    
-    // Funções auxiliares
-    function showLoading(message) {
-        const loading = document.createElement('div');
-        loading.id = 'loadingOverlay';
-        loading.innerHTML = `
-            <div class="neon-loader"></div>
-            <div class="loading-text">${message}</div>
-        `;
-        loading.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(10, 10, 15, 0.9);
-            backdrop-filter: blur(10px);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        `;
-        document.body.appendChild(loading);
-    }
-    
-    function hideLoading() {
-        const loading = document.getElementById('loadingOverlay');
-        if (loading) {
-            loading.style.opacity = '0';
-            setTimeout(() => loading.remove(), 300);
-        }
-    }
-    
-    function showNotification(message, actionElement = null, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `flash-message flash-${type}`;
-        notification.innerHTML = `
-            <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
-            <span>${message}</span>
-            <button class="flash-close" onclick="this.parentElement.remove()">
-                <i class="fas fa-times"></i>
-            </button>
-        `;
-        
-        if (actionElement) {
-            notification.querySelector('span').appendChild(actionElement);
-        }
-        
-        const container = document.querySelector('.flash-messages') || 
-                         document.querySelector('.content-wrapper');
-        if (container) {
-            container.prepend(notification);
-            
+            // Simular exclusão
             setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.remove();
+                const row = document.querySelector(`[onclick="deleteTransaction(${id})"]`).closest('tr');
+                if (row) {
+                    row.style.opacity = '0';
+                    setTimeout(() => row.remove(), 300);
+                    updateTransactionCount();
                 }
-            }, 5000);
+            }, 1000);
         }
     }
     
-    // Função para análise preditiva (exemplo)
-    function runPredictiveAnalysis() {
-        showLoading('Executando análise preditiva...');
+    function showAddTransactionModal() {
+        // Usar a função global definida no base.html
+        if (typeof window.showAddTransactionModal === 'function') {
+            window.showAddTransactionModal();
+        } else {
+            // Fallback
+            alert('Modal de nova transação - Use o botão na sidebar para adicionar transações');
+        }
+    }
+    
+    function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `flash-message flash-${type}`;
+        toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 300px;
+            animation: slideInRight 0.3s ease;
+        `;
+        
+        toast.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-circle' : type === 'danger' ? 'times-circle' : 'info-circle'}"></i>
+            ${message}
+            <button class="flash-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>
+        `;
+        
+        document.body.appendChild(toast);
         
         setTimeout(() => {
-            hideLoading();
-            
-            // Simular resultados da análise
-            const predictions = [
-                {
-                    title: 'Previsão para Próximo Mês',
-                    message: 'Baseado nas tendências, prevejo um aumento de 8% nas receitas.',
-                    confidence: 85
-                },
-                {
-                    title: 'Alerta de Despesas',
-                    message: 'Cuidado: Suas despesas com "Lazer" estão 25% acima da média histórica.',
-                    confidence: 90
-                },
-                {
-                    title: 'Oportunidade de Poupança',
-                    message: 'Você pode economizar até R$ 500/mês otimizando gastos com "Transporte".',
-                    confidence: 75
-                }
-            ];
-            
-            // Mostrar resultados
-            const modal = document.createElement('div');
-            modal.className = 'neon-modal active';
-            modal.innerHTML = `
-                <div class="neon-modal-content" style="max-width: 600px;">
-                    <div class="neon-modal-header">
-                        <h3><i class="fas fa-robot"></i> Análise Preditiva</h3>
-                        <button class="neon-modal-close" onclick="this.closest('.neon-modal').remove()">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="neon-modal-body">
-                        <div class="predictive-results">
-                            ${predictions.map(pred => `
-                                <div class="predictive-item">
-                                    <div class="predictive-header">
-                                        <h4>${pred.title}</h4>
-                                        <span class="confidence-badge" style="
-                                            background: ${pred.confidence >= 80 ? 'rgba(0, 255, 136, 0.1)' : 
-                                                      pred.confidence >= 60 ? 'rgba(255, 153, 0, 0.1)' : 
-                                                      'rgba(255, 51, 102, 0.1)'};
-                                            color: ${pred.confidence >= 80 ? '#00ff88' : 
-                                                   pred.confidence >= 60 ? '#ff9900' : 
-                                                   '#ff3366'};
-                                        ">
-                                            ${pred.confidence}% confiança
-                                        </span>
-                                    </div>
-                                    <p>${pred.message}</p>
-                                </div>
-                            `).join('')}
-                        </div>
-                    </div>
-                    <div class="neon-modal-footer">
-                        <button class="neon-btn primary" onclick="applyPredictions()">
-                            <i class="fas fa-check"></i>
-                            Aplicar Recomendações
-                        </button>
-                        <button class="neon-btn outline" 
-                                onclick="this.closest('.neon-modal').remove()">
-                            Fechar
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+    }
+    
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+    
+    // Função para exportar transações (em desenvolvimento)
+    function exportTransactions(format) {
+        showToast(`Exportando transações em ${format.toUpperCase()}...`, 'info');
+        
+        // Simular processamento
+        setTimeout(() => {
+            showToast('Exportação concluída!', 'success');
         }, 2000);
     }
-    
-    // Adicionar botão de análise preditiva
-    document.addEventListener('DOMContentLoaded', function() {
-        const header = document.querySelector('.analytics-header');
-        if (header) {
-            const aiButton = document.createElement('button');
-            aiButton.className = 'neon-btn accent';
-            aiButton.innerHTML = '<i class="fas fa-robot"></i> Análise Preditiva';
-            aiButton.onclick = runPredictiveAnalysis;
-            aiButton.style.marginLeft = 'auto';
-            header.appendChild(aiButton);
-        }
-    });
 </script>
-
-<style>
-    .predictive-results {
-        display: flex;
-        flex-direction: column;
-        gap: var(--spacing-lg);
-    }
-    
-    .predictive-item {
-        padding: var(--spacing-lg);
-        background: var(--bg-tertiary);
-        border-radius: var(--border-radius-md);
-        border-left: 4px solid var(--primary-color);
-    }
-    
-    .predictive-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: var(--spacing-sm);
-    }
-    
-    .confidence-badge {
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: var(--font-size-xs);
-        font-weight: 600;
-        font-family: var(--font-mono);
-    }
-    
-    .insights-list {
-        display: flex;
-        flex-direction: column;
-        gap: var(--spacing-md);
-    }
-    
-    .insight-item {
-        display: flex;
-        align-items: flex-start;
-        gap: var(--spacing-md);
-        padding: var(--spacing-md);
-        background: var(--bg-tertiary);
-        border-radius: var(--border-radius-md);
-    }
-    
-    .insight-item i {
-        color: var(--primary-color);
-        font-size: 1.25rem;
-        margin-top: 2px;
-    }
-    
-    .insight-item.warning i {
-        color: var(--warning-color);
-    }
-    
-    .insight-item.info i {
-        color: var(--info-color);
-    }
-</style>
 {% endblock %}
